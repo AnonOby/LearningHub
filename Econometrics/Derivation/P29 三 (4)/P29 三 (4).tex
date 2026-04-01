@@ -1,0 +1,101 @@
+\documentclass[12pt]{article}
+\usepackage[UTF8]{ctex}      % 中文支持
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+\usepackage{bm}              % 用于粗体数学符号
+
+\title{最小二乘法中拟合值与残差的正交性}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{模型是什么？}
+
+假设我们有 \(n\) 个样本点 \((X_i, Y_i)\)，我们认为它们大致满足一条直线：
+\[
+Y_i = \beta_0 + \beta_1 X_i + u_i
+\]
+其中 \(u_i\) 是随机误差。我们想用\textbf{最小二乘法 (OLS)} 估计 \(\beta_0\) 和 \(\beta_1\)，得到 \(\hat{\beta}_0, \hat{\beta}_1\)。
+
+拟合值（估计值）：
+\[
+\hat{Y}_i = \hat{\beta}_0 + \hat{\beta}_1 X_i
+\]
+
+残差：
+\[
+e_i = Y_i - \hat{Y}_i
+\]
+
+\section{正规方程从哪里来？}
+
+最小二乘法要最小化残差平方和：
+\[
+Q = \sum_{i=1}^n e_i^2 = \sum_{i=1}^n (Y_i - \hat{\beta}_0 - \hat{\beta}_1 X_i)^2
+\]
+
+为了找到使 \(Q\) 最小的 \(\hat{\beta}_0\) 和 \(\hat{\beta}_1\)，我们分别对它们求导，并令导数等于 0。
+
+\textbf{对 \(\hat{\beta}_0\) 求导}（注意这里是对 \(\hat{\beta}_0\) 求导，\(Y_i\)，\(X_i\) 是已知数据）：
+\[
+\frac{\partial Q}{\partial \hat{\beta}_0} = \sum_{i=1}^n 2(Y_i - \hat{\beta}_0 - \hat{\beta}_1 X_i) \cdot (-1) = -2\sum_{i=1}^n (Y_i - \hat{\beta}_0 - \hat{\beta}_1 X_i) = -2\sum_{i=1}^n e_i = 0
+\]
+所以：
+\[
+\sum_{i=1}^n e_i = 0 \quad \text{(方程1)}
+\]
+这个方程的意思：\textbf{残差的总和等于 0}。
+
+\textbf{对 \(\hat{\beta}_1\) 求导}：
+\[
+\frac{\partial Q}{\partial \hat{\beta}_1} = \sum_{i=1}^n 2(Y_i - \hat{\beta}_0 - \hat{\beta}_1 X_i) \cdot (-X_i) = -2\sum_{i=1}^n X_i e_i = 0
+\]
+所以：
+\[
+\sum_{i=1}^n X_i e_i = 0 \quad \text{(方程2)}
+\]
+这个方程的意思：\textbf{残差与 \(X_i\) 的乘积之和等于 0}，即 \(X_i\) 与 \(e_i\) 正交（不相关）。
+
+这两个方程就是一元回归的\textbf{正规方程}。它们是由最小二乘法的“一阶条件”自然推导出来的。
+
+\section{证明 \(\hat{Y}_i\) 与 \(e_i\) 的协方差为 0}
+
+样本协方差的公式是：
+\[
+\mathrm{Cov}(\hat{Y}_i, e_i) = \frac{1}{n} \sum_{i=1}^n (\hat{Y}_i - \bar{\hat{Y}})(e_i - \bar{e})
+\]
+其中 \(\bar{\hat{Y}} = \frac{1}{n}\sum \hat{Y}_i\)，\(\bar{e} = \frac{1}{n}\sum e_i\)。
+
+由方程 (1) 知道 \(\sum e_i = 0\)，所以 \(\bar{e} = 0\)。代入：
+\[
+\mathrm{Cov}(\hat{Y}_i, e_i) = \frac{1}{n} \sum_{i=1}^n (\hat{Y}_i - \bar{\hat{Y}}) e_i = \frac{1}{n} \left( \sum_{i=1}^n \hat{Y}_i e_i - \bar{\hat{Y}} \sum_{i=1}^n e_i \right)
+\]
+又因为 \(\sum e_i = 0\)，所以：
+\[
+\mathrm{Cov}(\hat{Y}_i, e_i) = \frac{1}{n} \sum_{i=1}^n \hat{Y}_i e_i
+\]
+
+现在计算 \(\sum \hat{Y}_i e_i\)。把 \(\hat{Y}_i = \hat{\beta}_0 + \hat{\beta}_1 X_i\) 代入：
+\[
+\sum_{i=1}^n \hat{Y}_i e_i = \sum_{i=1}^n (\hat{\beta}_0 + \hat{\beta}_1 X_i) e_i = \hat{\beta}_0 \sum_{i=1}^n e_i + \hat{\beta}_1 \sum_{i=1}^n X_i e_i
+\]
+由方程 (1) 得 \(\sum e_i = 0\)，由方程 (2) 得 \(\sum X_i e_i = 0\)。所以：
+\[
+\sum \hat{Y}_i e_i = \hat{\beta}_0 \cdot 0 + \hat{\beta}_1 \cdot 0 = 0
+\]
+因此：
+\[
+\mathrm{Cov}(\hat{Y}_i, e_i) = \frac{1}{n} \cdot 0 = 0
+\]
+
+\section{结论}
+
+在普通最小二乘法中，\textbf{估计值 \(\hat{Y}_i\) 与残差 \(e_i\) 的样本协方差为 0}，也就是它们不相关。这个结果不依赖于任何统计假设，是 OLS 的代数性质。
+
+你之前看到的 \(X_{ji}\) 之类的符号只是把上面的 \(X_i\) 推广到多个自变量的情况，本质是一样的：每个自变量都与残差正交（\(\sum X_{ji} e_i = 0\)），所以估计值（自变量的线性组合）也与残差正交。
+
+\end{document}
