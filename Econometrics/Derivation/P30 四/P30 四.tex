@@ -1,0 +1,145 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[UTF8]{ctex}   % 中文支持
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\setlist{leftmargin=*, nosep}
+
+\title{计量经济学中估计量的评价标准}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{先搞清楚我们在干什么}
+
+假设我们想研究一个真实世界的关系，比如“学习时间越长，考试成绩是不是越高”。  
+我们有一个\textbf{真实模型}（总体）：
+\[
+\text{成绩} = \beta_1 + \beta_2 \times \text{学习时间} + \text{误差}
+\]
+这里的 \(\beta_1, \beta_2\) 就是\textbf{总体参数}（真实值），但我们永远不知道它们精确是多少，因为我们没法调查所有人。
+
+怎么办？我们只能抽\textbf{一个样本}（比如调查100个同学），用这个样本去\textbf{估计} \(\beta_1, \beta_2\)，得到估计量 \(\hat{\beta}_1, \hat{\beta}_2\)。
+
+\textbf{关键点}：  
+\begin{itemize}
+    \item 样本不同，估计值就不同 $\rightarrow$ 估计量是\textbf{随机变量}（它有分布）。  
+    \item 我们希望这个估计量“尽可能接近”真实值。
+\end{itemize}
+
+于是，计量经济学家提出了三条评价标准：\textbf{无偏性、有效性、一致性}。下面一个个讲。
+
+\section{第一条：无偏性（Unbiasedness）}
+
+\subsection*{白话解释}
+\textbf{无偏}的意思是：虽然我们只抽了一个样本，估计值可能比真值大一点或小一点，但如果\textbf{反复抽无数次样本}，每次算一个估计值，然后把这些估计值取平均，这个平均值\textbf{恰好等于}真实值。
+
+换句话说：\textbf{没有系统性的偏差}。
+
+\subsection*{数学定义}
+\[
+E(\hat{\beta}) = \beta
+\]
+即估计量的期望（均值）等于真实值。
+
+\subsection*{形象比喻}
+你射箭，靶心是真实值 \(\beta\)。  
+\begin{itemize}
+    \item \textbf{无偏}：你射了很多箭，箭的\textbf{平均落点}正好在靶心。  
+    \item \textbf{有偏}：平均落点偏左或偏右，说明你的瞄准方法有系统误差。
+\end{itemize}
+
+\subsection*{重要结论（最小二乘法）}
+在经典线性回归假设（比如误差项均值为0、与自变量不相关）下，\textbf{最小二乘估计量是无偏的}。这是一个非常优秀的性质。
+
+\section{第二条：有效性（Efficiency）}
+
+\subsection*{白话解释}
+有时候，我们可能有好几种方法都能得到无偏估计量（比如最小二乘法、另一种算法）。它们都无偏，但\textbf{谁的波动更小}？波动越小，说明每次抽样得到的估计值越稳定、越可靠。波动大小用\textbf{方差}衡量。
+
+\textbf{有效} = 在所有无偏估计量中，\textbf{方差最小}的那个。
+
+\subsection*{数学定义}
+设 \(\hat{\beta}\) 和 \(\beta^*\) 都是 \(\beta\) 的无偏估计量。如果
+\[
+\operatorname{Var}(\hat{\beta}) \le \operatorname{Var}(\beta^*)
+\]
+对任意无偏估计量 \(\beta^*\) 都成立，那么 \(\hat{\beta}\) 是\textbf{有效估计量}。
+
+\subsection*{形象比喻}
+还是射箭，两个人都是无偏的（平均落点在靶心）。  
+\begin{itemize}
+    \item 甲射的箭非常集中（方差小）  
+    \item 乙射的箭很分散（方差大）  
+\end{itemize}
+显然甲更有效，你更相信甲的估计。
+
+\subsection*{看图理解（你发的图2.8）}
+两个分布中心都在真值，但一个瘦高（方差小），一个矮胖（方差大）。瘦高的那个就是有效估计量。
+
+\subsection*{重要结论（高斯-马尔可夫定理）}
+在经典线性回归假设下，\textbf{最小二乘估计量是所有线性无偏估计量中方差最小的}，即它是\textbf{最佳线性无偏估计量（BLUE）}。这就叫有效性。
+
+\section{第三条：一致性（Consistency）}
+
+\subsection*{白话解释}
+无偏性和有效性都是针对\textbf{固定样本容量}（比如100个样本）说的。  
+但现实中样本容量往往有限。一致性关心的是：\textbf{当样本容量越来越大，趋于无穷时}，估计量会不会越来越接近真实值？
+
+如果会，就叫一致估计量。
+
+\subsection*{数学定义}
+对于任意小的正数 \(\varepsilon\)（比如0.0001），当样本容量 \(n \to \infty\) 时：
+\[
+\lim_{n \to \infty} P\left( |\hat{\beta} - \beta| < \varepsilon \right) = 1
+\]
+也就是说，估计值与真值的差距小于任意小数的概率趋近于1 —— 估计量\textbf{依概率收敛}到真值。
+
+\subsection*{注意你发的片段里公式写得不标准，应该是：}
+\[
+P\left( \lim_{n \to \infty} \hat{\beta} = \beta \right) = 1
+\]
+或者上面那个极限概率=1的形式。你的片段里写成 \(P(\lim \hat{\beta} = \beta)\) 是不规范的。
+
+\subsection*{形象比喻}
+你用一个方法估计平均身高。  
+\begin{itemize}
+    \item 样本容量10时，误差可能很大；  
+    \item 样本容量100时，误差变小；  
+    \item 样本容量10000时，误差几乎可以忽略。  
+\end{itemize}
+随着样本增加，估计值越来越稳定在真值附近，这就是一致性。
+
+\subsection*{与无偏性的区别}
+\begin{itemize}
+    \item \textbf{无偏}：对固定小样本，平均不偏。但单次估计可能离真值很远（方差大）。  
+    \item \textbf{一致}：样本越大，估计值几乎肯定接近真值。  
+    存在“有偏但一致”的情况：比如小样本有轻微偏差，但大样本下偏差消失。  
+    也存在“无偏但不一致”的情况：比如方差不随样本增大而减小，估计值始终在真值附近波动但不会收敛。
+\end{itemize}
+
+\subsection*{重要结论（最小二乘法）}
+在适当条件下（如误差方差有限、自变量有有限四阶矩等），最小二乘估计量是\textbf{一致估计量}。所以大样本下你可以放心使用。
+
+\section{总结与对比表}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+性质   & 含义                     & 关心什么       & 数学表达                                    & 最小二乘是否具备   \\
+\midrule
+无偏性 & 重复抽样的平均值等于真值     & 没有系统偏差   & \(E(\hat{\beta})=\beta\)                  & 是（在经典假设下） \\
+有效性 & 在所有无偏估计中方差最小     & 估计最稳定     & \(\operatorname{Var}(\hat{\beta}) \le \operatorname{Var}(\beta^*)\) & 是（BLUE）       \\
+一致性 & 样本越大，估计值越逼近真值   & 大样本下可靠   & \(\hat{\beta} \xrightarrow{P} \beta\)     & 是（更宽松条件下） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
