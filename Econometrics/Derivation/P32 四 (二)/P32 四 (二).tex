@@ -1,0 +1,210 @@
+\documentclass[12pt]{article}
+\usepackage{ctex}          % 中文支持，自动处理字体
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{geometry}
+\geometry{margin=1in}
+\title{OLS估计量的统计性质——极详细推导}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{引言}
+本文以初学者能跟上的细致程度，推导普通最小二乘（OLS）估计量的三个核心性质：线性性、无偏性与有效性（方差最小）。每一步代数变形、每一个常数处理、每一个求和规则都给出解释。
+
+\section{超级基础的准备知识}
+\subsection{模型设定}
+\[
+Y_i = \beta_1 + \beta_2 X_i + u_i,\quad i=1,2,\dots,n
+\]
+\begin{itemize}
+    \item $Y_i$：第$i$个观测的被解释变量。
+    \item $X_i$：第$i$个观测的解释变量（固定）。
+    \item $\beta_1,\beta_2$：未知的真实总体参数。
+    \item $u_i$：随机误差项。
+    \item $n$：样本容量。
+\end{itemize}
+
+\subsection{均值与离差}
+\begin{align*}
+\bar{X} &= \frac{1}{n}\sum_{i=1}^n X_i\\
+x_i &= X_i - \bar{X}
+\end{align*}
+离差的重要性质：
+\[
+\sum_{i=1}^n x_i = \sum_{i=1}^n (X_i - \bar{X}) = \sum_{i=1}^n X_i - n\bar{X} = n\bar{X} - n\bar{X} = 0.
+\]
+
+\subsection{求和符号的简单规则}
+\begin{enumerate}
+    \item $\sum (a_i + b_i) = \sum a_i + \sum b_i$
+    \item $\sum (c\cdot a_i) = c \cdot \sum a_i$ （常数$c$可提出）
+    \item $\sum_{i=1}^n c = n\cdot c$
+\end{enumerate}
+
+\subsection{OLS估计量公式}
+最小二乘法通过最小化残差平方和 $\sum_{i=1}^n (Y_i - \hat{\beta}_1 - \hat{\beta}_2 X_i)^2$ 得到：
+\begin{align}
+    \hat{\beta}_2 &= \frac{\sum_{i=1}^n (X_i - \bar{X})(Y_i - \bar{Y})}{\sum_{i=1}^n (X_i - \bar{X})^2} = \frac{\sum x_i y_i}{\sum x_i^2}\label{eq:b2hat}\\
+    \hat{\beta}_1 &= \bar{Y} - \hat{\beta}_2 \bar{X}\label{eq:b1hat}
+\end{align}
+其中 $y_i = Y_i - \bar{Y}$。
+
+\section{性质一：线性性}
+目标：证明 $\hat{\beta}_1$ 和 $\hat{\beta}_2$ 均可表示为 $Y_i$ 的线性组合，系数仅由 $X$ 决定。
+
+\subsection{$\hat{\beta}_2$ 的线性表示}
+由式\eqref{eq:b2hat}：
+\[
+\hat{\beta}_2 = \frac{\sum_{i=1}^n x_i y_i}{\sum_{i=1}^n x_i^2}.
+\]
+分母 $D = \sum x_i^2$ 是常数（因$X$固定）。分子展开：
+\begin{align*}
+\sum_{i=1}^n x_i y_i &= \sum_{i=1}^n x_i (Y_i - \bar{Y}) \\
+&= \sum_{i=1}^n (x_i Y_i - x_i \bar{Y}) \\
+&= \sum_{i=1}^n x_i Y_i - \bar{Y} \sum_{i=1}^n x_i.
+\end{align*}
+由于 $\sum x_i = 0$，第二项消失，得到：
+\[
+\sum_{i=1}^n x_i y_i = \sum_{i=1}^n x_i Y_i.
+\]
+代入原式：
+\[
+\hat{\beta}_2 = \frac{\sum_{i=1}^n x_i Y_i}{\sum_{i=1}^n x_i^2} = \sum_{i=1}^n \left( \frac{x_i}{\sum_{j=1}^n x_j^2} \right) Y_i.
+\]
+定义权重：
+\[
+k_i = \frac{x_i}{\sum_{j=1}^n x_j^2},
+\]
+则
+\[
+\hat{\beta}_2 = \sum_{i=1}^n k_i Y_i.
+\]
+因为 $x_i$ 固定，$k_i$ 均为常数，故 $\hat{\beta}_2$ 是 $Y_i$ 的线性组合。\textbf{线性性得证。}
+
+\subsection{权重 $k_i$ 的两个重要性质}
+\begin{align}
+\sum_{i=1}^n k_i &= \frac{1}{\sum x_j^2}\sum_{i=1}^n x_i = 0 \label{propA}\\
+\sum_{i=1}^n k_i X_i &= \sum_{i=1}^n k_i (x_i + \bar{X}) = \sum_{i=1}^n k_i x_i + \bar{X}\sum_{i=1}^n k_i = 1 \label{propB}
+\end{align}
+式\eqref{propB} 中用到 $\sum k_i x_i = \sum \frac{x_i^2}{\sum x_j^2} = 1$。
+
+\subsection{$\hat{\beta}_1$ 的线性表示}
+由式\eqref{eq:b1hat}：
+\[
+\hat{\beta}_1 = \bar{Y} - \hat{\beta}_2 \bar{X} = \sum_{i=1}^n \frac{1}{n} Y_i - \bar{X} \sum_{i=1}^n k_i Y_i = \sum_{i=1}^n \left( \frac{1}{n} - \bar{X} k_i \right) Y_i.
+\]
+令 $w_i = \frac{1}{n} - \bar{X} k_i$，则 $\hat{\beta}_1 = \sum_{i=1}^n w_i Y_i$，同样为 $Y_i$ 的线性组合。
+
+\section{性质二：无偏性}
+目标：证明 $E(\hat{\beta}_1) = \beta_1$，$E(\hat{\beta}_2) = \beta_2$。\\
+\textbf{关键假定}：
+\begin{enumerate}
+    \item $X_i$ 固定，从而 $x_i, k_i$ 均固定。
+    \item $E(u_i) = 0$ 对所有 $i$。
+\end{enumerate}
+
+\subsection{$\hat{\beta}_2$ 的无偏性}
+将真实模型 $Y_i = \beta_1 + \beta_2 X_i + u_i$ 代入线性表示：
+\begin{align*}
+\hat{\beta}_2 &= \sum_{i=1}^n k_i (\beta_1 + \beta_2 X_i + u_i)\\
+&= \beta_1 \underbrace{\sum_{i=1}^n k_i}_{=0\ (\text{式}\ref{propA})} + \beta_2 \underbrace{\sum_{i=1}^n k_i X_i}_{=1\ (\text{式}\ref{propB})} + \sum_{i=1}^n k_i u_i\\
+&= \beta_2 + \sum_{i=1}^n k_i u_i.
+\end{align*}
+两边取数学期望：
+\[
+E(\hat{\beta}_2) = \beta_2 + \sum_{i=1}^n k_i E(u_i) = \beta_2 + 0 = \beta_2.
+\]
+因此 $\hat{\beta}_2$ 是 $\beta_2$ 的无偏估计。
+
+\subsection{$\hat{\beta}_1$ 的无偏性}
+首先计算 $E(\bar{Y})$：
+\[
+\bar{Y} = \frac{1}{n}\sum_{i=1}^n (\beta_1 + \beta_2 X_i + u_i) = \beta_1 + \beta_2 \bar{X} + \frac{1}{n}\sum_{i=1}^n u_i,
+\]
+故
+\[
+E(\bar{Y}) = \beta_1 + \beta_2 \bar{X} + \frac{1}{n}\sum E(u_i) = \beta_1 + \beta_2 \bar{X}.
+\]
+再由 $\hat{\beta}_1 = \bar{Y} - \hat{\beta}_2 \bar{X}$ 取期望：
+\[
+E(\hat{\beta}_1) = E(\bar{Y}) - \bar{X} E(\hat{\beta}_2) = (\beta_1 + \beta_2 \bar{X}) - \bar{X} \beta_2 = \beta_1.
+\]
+故 $\hat{\beta}_1$ 也是无偏的。
+
+\section{性质三：方差与有效性}
+\subsection{补充假定}
+\begin{enumerate}
+    \item[3.] 同方差：$\mathrm{Var}(u_i) = E(u_i^2) = \sigma^2$（常数）。
+    \item[4.] 无自相关：$\mathrm{Cov}(u_i, u_j) = E(u_i u_j) = 0$ 对 $i \neq j$。
+\end{enumerate}
+
+\subsection{方差运算规则}
+若 $E(X)=0$，则 $\mathrm{Var}(X) = E(X^2)$。对常数 $a$，$\mathrm{Var}(aX) = a^2\mathrm{Var}(X)$。不相关变量之和的方差等于方差之和。
+
+\subsection{$\hat{\beta}_2$ 的方差}
+由 $\hat{\beta}_2 - \beta_2 = \sum k_i u_i$，且 $E(\hat{\beta}_2) = \beta_2$：
+\begin{align*}
+\mathrm{Var}(\hat{\beta}_2) &= E\left[ \left( \sum_{i=1}^n k_i u_i \right)^2 \right]\\
+&= E\left[ \sum_{i=1}^n k_i^2 u_i^2 + 2 \sum_{i<j} k_i k_j u_i u_j \right]\\
+&= \sum_{i=1}^n k_i^2 E(u_i^2) + 2 \sum_{i<j} k_i k_j E(u_i u_j)\\
+&= \sum_{i=1}^n k_i^2 \sigma^2 + 0 = \sigma^2 \sum_{i=1}^n k_i^2.
+\end{align*}
+计算 $\sum k_i^2$：
+\[
+\sum_{i=1}^n k_i^2 = \sum_{i=1}^n \frac{x_i^2}{(\sum x_j^2)^2} = \frac{\sum x_i^2}{(\sum x_i^2)^2} = \frac{1}{\sum x_i^2}.
+\]
+于是
+\[
+\boxed{\mathrm{Var}(\hat{\beta}_2) = \frac{\sigma^2}{\sum_{i=1}^n x_i^2}}.
+\]
+
+\subsection{$\hat{\beta}_1$ 的方差}
+由 $\hat{\beta}_1 = \sum w_i Y_i$，代入真实模型可证 $\hat{\beta}_1 - \beta_1 = \sum w_i u_i$（过程略，需计算 $\sum w_i = 1$ 和 $\sum w_i X_i = 0$）。于是
+\[
+\mathrm{Var}(\hat{\beta}_1) = \sigma^2 \sum_{i=1}^n w_i^2.
+\]
+计算 $\sum w_i^2$：
+\[
+w_i = \frac{1}{n} - \bar{X} k_i,\quad w_i^2 = \frac{1}{n^2} - \frac{2\bar{X}}{n} k_i + \bar{X}^2 k_i^2.
+\]
+求和并利用 $\sum k_i = 0$，$\sum k_i^2 = \frac{1}{\sum x_i^2}$：
+\[
+\sum_{i=1}^n w_i^2 = \frac{n}{n^2} - \frac{2\bar{X}}{n}\cdot 0 + \bar{X}^2 \cdot \frac{1}{\sum x_i^2} = \frac{1}{n} + \frac{\bar{X}^2}{\sum x_i^2}.
+\]
+因此
+\[
+\boxed{\mathrm{Var}(\hat{\beta}_1) = \sigma^2 \left( \frac{1}{n} + \frac{\bar{X}^2}{\sum x_i^2} \right)}.
+\]
+等价形式（利用 $\sum X_i^2 = \sum x_i^2 + n\bar{X}^2$）：
+\[
+\mathrm{Var}(\hat{\beta}_1) = \sigma^2 \frac{\sum X_i^2}{n \sum x_i^2}.
+\]
+
+\subsection{有效性（高斯-马尔可夫定理）}
+在满足上述假定时，OLS估计量 $\hat{\beta}_1$ 和 $\hat{\beta}_2$ 是\textbf{最佳线性无偏估计量（BLUE）}：在所有关于 $\beta_1, \beta_2$ 的线性无偏估计量中，它们的方差最小。
+
+\section{误差方差 $\sigma^2$ 的估计与标准误}
+$\sigma^2$ 未知，需用样本估计。残差 $e_i = Y_i - \hat{\beta}_1 - \hat{\beta}_2 X_i$。无偏估计量为：
+\[
+\hat{\sigma}^2 = \frac{\sum_{i=1}^n e_i^2}{n-2}.
+\]
+自由度 $n-2$ 是因为估计两个参数消耗了两个自由度。
+
+\subsection{标准误}
+用 $\hat{\sigma}$ 替代 $\sigma$ 得到估计量的标准误（方差的平方根）：
+\begin{align*}
+\mathrm{SE}(\hat{\beta}_2) &= \frac{\hat{\sigma}}{\sqrt{\sum x_i^2}},\\
+\mathrm{SE}(\hat{\beta}_1) &= \hat{\sigma} \sqrt{\frac{1}{n} + \frac{\bar{X}^2}{\sum x_i^2}}.
+\end{align*}
+
+\section*{总结}
+\begin{itemize}
+    \item \textbf{线性性}：OLS估计量是 $Y_i$ 的加权和，权数仅依赖于 $X$。
+    \item \textbf{无偏性}：估计量的期望等于总体真值，平均而言没有系统偏差。
+    \item \textbf{有效性}：OLS在所有线性无偏估计中波动最小（方差最小）。
+    \item \textbf{方差公式}：解释变量波动 $\sum x_i^2$ 越大、样本量 $n$ 越大、误差方差 $\sigma^2$ 越小，估计越精确。
+\end{itemize}
+
+\end{document}
