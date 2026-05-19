@@ -1,0 +1,633 @@
+\documentclass[12pt,a4paper]{ctexart}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage[margin=2.5cm]{geometry}
+\setlength{\parskip}{0.5\baselineskip}
+\pagestyle{plain}
+
+\title{\bfseries 多元线性回归模型的假设检验和区间估计——极详细逐步讲解}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{引言}
+
+我们之前已经学会了怎么用最小二乘法把多元线性回归模型的参数估计出来。但估计出来还不够——你画了一条回归线，它到底画得好不好？你估出来的参数，到底靠不靠谱？整个回归方程，到底有没有意义？
+
+这三个问题，分别对应三大检验：
+\begin{enumerate}
+    \item \textbf{拟合优度检验}：线画得好不好？（\(R^2\) 和 \(\bar{R}^2\)）
+    \item \textbf{F 检验}：整个方程有没有意义？（所有解释变量联合起来对 Y 有没有显著影响？）
+    \item \textbf{t 检验}：每个解释变量单独来看有没有用？（某个 \(X_j\) 对 Y 的影响显不显著？）
+\end{enumerate}
+最后，参数的点估计只是一个数字，我们还想知道真实值大概落在什么范围内——这就是\textbf{区间估计}。
+
+本文将一步一步地推导和讲解这四大块内容，每一步都给出解释，绝不跳步。
+
+\section{第一步：拟合优度检验——模型到底拟合得好不好？}
+
+\subsection{1.1 我们要解决什么问题？}
+
+想象一下，你有一堆数据点，然后用多元回归画了一个“超平面”去穿过这些点。这条超平面（回归面）画得好不好？它跟真实的点靠得有多近？这就是“拟合优度”要回答的问题。
+
+在简单回归（只有一个解释变量）里，我们已经学过用可决系数 \(R^2\) 来衡量。在多元回归里，思路完全一样——只不过现在有多个解释变量一起帮我们解释 Y 的波动。
+
+为了用数字衡量“好”的程度，我们需要先学会把 Y 的波动（变差）拆开来分析。
+
+\subsection{1.2 总变差的分解——把数据的波动拆开来看}
+
+我们先看一个核心等式（基于样本回归函数）：
+\[
+Y_i = \hat{Y}_i + e_i \qquad \text{(式3.37的变形)}
+\]
+别被符号吓到，我们来解释每一个字母：
+\begin{itemize}
+    \item \textbf{\(Y_i\)}：真实的观测值。比如第 \(i\) 个城市的真实货币供应量。这是图上那个实心圆点的高度。
+    \item \textbf{\(\hat{Y}_i\)}：估计值（预测值）。这是回归面在第 \(i\) 个点位置上的高度，也就是模型预测这个城市的货币供应量应该是多少。
+    \item \textbf{\(e_i\)}：残差。真实值和预测值之间的差（\(e_i = Y_i - \hat{Y}_i\)）。如果回归面画得完美，这个差就是 0。
+\end{itemize}
+
+\subsubsection{1.2.1 引入参考标准：平均值 \(\bar{Y}\)}
+
+光看每个点离回归面多远还不够，我们需要一个比较的基准。这个基准就是所有真实值 \(Y_i\) 的平均值 \(\bar{Y}\)。
+
+想象一个场景：你要猜一个城市的货币供应量。
+\begin{itemize}
+    \item 如果没有任何信息（不知道 GDP 也不知道 CPI），你猜平均值 \(\bar{Y}\) 就是最稳妥的猜测。
+    \item 现在，你知道了 GDP 和 CPI，你用回归面算出了一个更精准的猜测 \(\hat{Y}_i\)。
+    \item 我们要看的是：用了这些信息（回归面）之后，你的猜测比瞎猜（用平均值）好了多少？
+\end{itemize}
+
+\subsubsection{1.2.2 关键的离差恒等式推导（极其详细，无跳步）}
+
+我们要比较三个距离：
+\begin{enumerate}
+    \item 总离差：真实值 \(Y_i\) 离开平均值 \(\bar{Y}\) 有多远？即 \((Y_i - \bar{Y})\)。
+    \item 解释离差：回归面预测值 \(\hat{Y}_i\) 离开平均值 \(\bar{Y}\) 有多远？即 \((\hat{Y}_i - \bar{Y})\)。
+    \item 未解释离差：真实值 \(Y_i\) 离开回归面预测值 \(\hat{Y}_i\) 有多远？即 \((Y_i - \hat{Y}_i) = e_i\)。
+\end{enumerate}
+
+推导开始：
+
+我们已知：\(Y_i = \hat{Y}_i + e_i\)。
+
+\textbf{步骤 1}：等式两边同时减去平均值 \(\bar{Y}\)：
+\[
+Y_i - \bar{Y} = \hat{Y}_i + e_i - \bar{Y}
+\]
+
+\textbf{步骤 2}：把右边重新排列，把 \(\hat{Y}_i\) 和 \(-\bar{Y}\) 放在一起：
+\begin{equation}
+Y_i - \bar{Y} = (\hat{Y}_i - \bar{Y}) + e_i \tag{3.37}
+\end{equation}
+
+\textbf{结论}：总离差 = 解释离差 + 未解释离差（残差）。
+\begin{itemize}
+    \item 如果回归面完全没用（\(\hat{Y}_i = \bar{Y}\)），那么解释离差为 0，总离差全是残差。
+    \item 如果回归面完美（\(e_i = 0\)），那么总离差全被解释了。
+\end{itemize}
+
+\subsubsection{1.2.3 为什么要把离差平方再加总？（TSS = ESS + RSS）}
+
+前面我们只看了一个点。现在要看所有点的整体情况。
+
+但是，直接加总离差 \((Y_i - \bar{Y})\) 会有一个致命问题：有的点比平均值高（正数），有的比平均值低（负数），一加就抵消了，总和接近 0，看不出波动大小。
+
+\textbf{解决办法：平方！} 平方之后负数变正数，越远的点贡献越大。
+
+我们对离差等式两边平方，然后对所有 \(i\)（从 1 到 \(n\)）求和。
+
+等式：\((Y_i - \bar{Y}) = (\hat{Y}_i - \bar{Y}) + e_i\)
+
+两边平方：
+\[
+(Y_i - \bar{Y})^2 = [(\hat{Y}_i - \bar{Y}) + e_i]^2
+\]
+
+展开右边（完全平方公式 \((a+b)^2 = a^2 + 2ab + b^2\)）：
+\[
+(Y_i - \bar{Y})^2 = (\hat{Y}_i - \bar{Y})^2 + 2(\hat{Y}_i - \bar{Y})e_i + e_i^2
+\]
+
+对所有样本求和：
+\[
+\sum_{i=1}^{n}(Y_i - \bar{Y})^2 = \sum_{i=1}^{n}(\hat{Y}_i - \bar{Y})^2 + 2\sum_{i=1}^{n}(\hat{Y}_i - \bar{Y})e_i + \sum_{i=1}^{n} e_i^2
+\]
+
+\textbf{关键跳跃点解释（这里绝对不停留）}：在 OLS 的假设下，中间交叉项 \(2\sum(\hat{Y}_i - \bar{Y})e_i\) 恰好等于 0。这是因为残差与预测值的协方差为 0——这是 OLS 正规方程的直接推论。对于初学者，只要记住：用最小二乘法画回归面的方法，保证了这一项自动消掉了。
+
+最终简化结果：
+\begin{equation}
+\sum_{i=1}^{n}(Y_i - \bar{Y})^2 = \sum_{i=1}^{n}(\hat{Y}_i - \bar{Y})^2 + \sum_{i=1}^{n} e_i^2 \tag{3.38}
+\end{equation}
+
+用简洁的代号表示：
+\[
+\text{TSS} = \text{ESS} + \text{RSS}
+\]
+\begin{itemize}
+    \item \textbf{TSS（Total Sum of Squares，总离差平方和）}：Y 原本的波动有多大。自由度为 \(n-1\)（因为计算时用了平均值，失去 1 个自由度）。
+    \item \textbf{ESS（Explained Sum of Squares，回归平方和）}：回归面能解释的波动有多大。自由度为 \(k-1\)（\(k\) 是包括截距项在内的参数个数，解释变量有 \(k-1\) 个，每个解释变量贡献一个自由度）。
+    \item \textbf{RSS（Residual Sum of Squares，残差平方和）}：回归面解释不了的波动有多大。自由度为 \(n-k\)（\(n\) 个观测值减去估计的 \(k\) 个参数）。
+\end{itemize}
+
+自由度也满足：\((n-1) = (k-1) + (n-k)\)。
+
+显然，ESS 越大，RSS 就越小，模型对数据的拟合程度就越高。
+
+\subsection{1.3 多重可决系数 \(R^2\)——一把衡量好坏的尺子}
+
+\subsubsection{1.3.1 公式推导}
+
+既然 TSS = ESS + RSS，我们两边同时除以 TSS（假设 TSS 不为 0）：
+\[
+\frac{\text{TSS}}{\text{TSS}} = \frac{\text{ESS}}{\text{TSS}} + \frac{\text{RSS}}{\text{TSS}}
+\]
+\[
+1 = \frac{\text{ESS}}{\text{TSS}} + \frac{\text{RSS}}{\text{TSS}}
+\]
+
+我们定义\textbf{多重可决系数} \(R^2\) 为 ESS 占 TSS 的比例：
+\begin{equation}
+R^2 = \frac{\text{ESS}}{\text{TSS}} \tag{3.39}
+\end{equation}
+
+把它移项一下：
+\begin{equation}
+R^2 = 1 - \frac{\text{RSS}}{\text{TSS}} = 1 - \frac{\sum e_i^2}{\sum(Y_i - \bar{Y})^2} \tag{3.40}
+\end{equation}
+
+\subsubsection{1.3.2 直观理解 \(R^2\) 的大小意味着什么？}
+
+\begin{itemize}
+    \item \textbf{情况 1：拟合极好（\(R^2 = 0.99\)）}\\
+    解释：总波动中，有 99\% 被解释变量抓住了，只有 1\% 是噪声（残差）。回归面画得特别好，点几乎都贴在面上。
+    \item \textbf{情况 2：拟合极差（\(R^2 = 0.01\)）}\\
+    解释：总波动中，只有 1\% 被解释，99\% 都是残差。这条回归面画了等于没画，还不如直接用平均值。
+    \item \textbf{情况 3：取值范围}\\
+    因为 ESS 最大等于 TSS（完美拟合），最小等于 0（完全没用），所以 \(R^2\) 永远在 0 到 1 之间。
+\end{itemize}
+
+\subsubsection{1.3.3 \(R^2\) 的矩阵形式}
+
+书上给出了矩阵表示，方便用计算机计算：
+\begin{equation}
+\text{TSS} = Y'Y - n\bar{Y}^2 \tag{3.41}
+\end{equation}
+这里 \(Y\) 是因变量观测值组成的列向量，\(Y'\) 是它的转置。\(Y'Y = \sum Y_i^2\)，减去 \(n\bar{Y}^2\) 后就得到 \(\sum(Y_i - \bar{Y})^2\)。
+\begin{equation}
+\text{ESS} = \hat{\beta}'X'Y - n\bar{Y}^2 \tag{3.42}
+\end{equation}
+其中 \(\hat{\beta}\) 是参数估计向量，\(X\) 是解释变量矩阵（含常数列）。
+
+因此：
+\begin{equation}
+R^2 = \frac{\hat{\beta}'X'Y - n\bar{Y}^2}{Y'Y - n\bar{Y}^2} \tag{3.43}
+\end{equation}
+
+\subsection{1.4 修正的可决系数 \(\bar{R}^2\)——解决 \(R^2\) 的一个致命缺陷}
+
+\subsubsection{1.4.1 \(R^2\) 有什么问题？}
+
+由式（3.43）可以看出，多重可决系数有一个重要性质：\textbf{它是模型中解释变量个数的不减函数}。
+
+什么意思？想象一个场景：
+\begin{itemize}
+    \item 模型 A：用 GDP 预测货币供应量，\(R^2 = 0.95\)。
+    \item 模型 B：用 GDP + CPI 预测货币供应量，\(R^2 = 0.96\)。
+\end{itemize}
+\(R^2\) 变大了，但你不能直接说模型 B 更好——因为你多加了一个变量，即使这个变量完全没用（比如你加一个“市长身高”），\(R^2\) 也几乎不会变小（最多不变）。
+
+原因很简单：TSS 是固定的（只跟 Y 的数据有关），多加解释变量后，ESS 只可能增大或不变，RSS 只可能减小或不变。所以 \(R^2\) 只会增不会减。
+
+但可决系数只涉及变差的大小，\textbf{没有考虑自由度}。增加解释变量必然增加待估参数个数，损失自由度。这就像你用 100 个参数去完美拟合 100 个数据点，\(R^2 = 1\)，但这毫无意义——你只是在“死记硬背”数据，不是在找规律。
+
+\subsubsection{1.4.2 修正方法：用自由度校正}
+
+既然问题出在“没考虑自由度”，那我们就用自由度去修正残差平方和与总离差平方和：
+\begin{itemize}
+    \item RSS 除以它的自由度 \((n-k)\)：\(\frac{\text{RSS}}{n-k}\)，这是残差方差（均方误差）。
+    \item TSS 除以它的自由度 \((n-1)\)：\(\frac{\text{TSS}}{n-1}\)，这是 Y 的样本方差。
+\end{itemize}
+
+\textbf{修正的可决系数}定义为：
+\begin{equation}
+\bar{R}^2 = 1 - \frac{\text{RSS}/(n-k)}{\text{TSS}/(n-1)} = 1 - \frac{n-1}{n-k} \cdot \frac{\sum e_i^2}{\sum(Y_i - \bar{Y})^2} \tag{3.44}
+\end{equation}
+
+\subsubsection{1.4.3 \(\bar{R}^2\) 和 \(R^2\) 的关系（极其详细的推导）}
+
+我们已经知道 \(R^2 = 1 - \frac{\text{RSS}}{\text{TSS}}\)，所以 \(\frac{\text{RSS}}{\text{TSS}} = 1 - R^2\)。
+
+把 \(\bar{R}^2\) 的式子中的 \(\frac{\sum e_i^2}{\sum(Y_i - \bar{Y})^2}\) 替换为 \(\frac{\text{RSS}}{\text{TSS}} = 1 - R^2\)：
+\begin{equation}
+\bar{R}^2 = 1 - \frac{n-1}{n-k} \cdot (1 - R^2) \tag{3.45}
+\end{equation}
+
+\textbf{关键理解}：当 \(k > 1\) 时（多元回归一定满足），\(\frac{n-1}{n-k} > 1\)，所以 \(\frac{n-1}{n-k} \cdot (1 - R^2) > (1 - R^2)\)，因此：
+\[
+\bar{R}^2 < R^2
+\]
+这意味着修正后的 \(\bar{R}^2\) 一定比未修正的 \(R^2\) 小。而且，\textbf{解释变量越多（\(k\) 越大），\(\frac{n-1}{n-k}\) 越大，对 \(R^2\) 的“惩罚”越重}。这正好纠正了 \(R^2\) 随解释变量增多而虚高的问题。
+
+\textbf{重要提醒}：\(R^2\) 必定非负，但 \(\bar{R}^2\) 可能为负值！当模型拟合极差时（\(\text{RSS}/(n-k) > \text{TSS}/(n-1)\)），按式（3.45）算出来 \(\bar{R}^2 < 0\)。这时规定 \(\bar{R}^2 = 0\)，意味着模型还不如用平均值预测。
+
+\subsubsection{1.4.4 书上的计算例子（一步步算）}
+
+已知例 3.1 的数据：
+\begin{itemize}
+    \item \(\text{RSS} = \sum e_i^2 = 36,623,503,360\)
+    \item \(\text{TSS} = \sum(Y_i - \bar{Y})^2 = 8,874,045,210,624\)
+    \item \(n = 21,\; k = 3\)
+\end{itemize}
+
+\textbf{计算 \(R^2\)：}
+
+步骤 1：算除法 \(\frac{36,623,503,360}{8,874,045,210,624} \approx 0.0041\)
+
+步骤 2：用 1 减 \(1 - 0.0041 = 0.9959\)
+
+所以 \(R^2 = 0.9959\)，即总波动中 99.59\% 被解释变量解释了。
+
+\textbf{计算 \(\bar{R}^2\)：}
+\[
+\bar{R}^2 = 1 - (1 - R^2) \times \frac{n-1}{n-k} = 1 - (1 - 0.9959) \times \frac{20}{18}
+\]
+步骤 1：\(1 - 0.9959 = 0.0041\)
+
+步骤 2：\(\frac{20}{18} \approx 1.1111\)
+
+步骤 3：\(0.0041 \times 1.1111 \approx 0.0046\)
+
+步骤 4：\(1 - 0.0046 = 0.9954\)
+
+所以 \(\bar{R}^2 = 0.9954\)，比 \(R^2\) 略小，但依然极高——模型拟合得非常好。
+
+\textbf{最后强调}：用样本估计的回归模型计算的可决系数和修正的可决系数，也是随抽样而变动的随机变量。\(R^2\) 或 \(\bar{R}^2\) 越大仅说明解释变量对被解释变量的\textbf{联合影响程度}越大，\textbf{并非}说明各解释变量对被解释变量的影响程度都大。选择模型时不能仅凭可决系数高低判断优劣。
+
+\section{第二步：回归方程的显著性检验（F 检验）——整个方程到底有没有意义？}
+
+\subsection{2.1 我们要解决什么问题？}
+
+多元回归模型里有好几个解释变量。\(R^2\) 高只能说明这些变量“联合起来”解释了 Y 的很多波动，但不能告诉我们：这种解释是不是巧合？是不是其实所有解释变量对 Y 都没有影响，只是抽样偶然让 \(R^2\) 看起来很大？
+
+F 检验要回答的就是：\textbf{所有解释变量联合起来，对 Y 是否有显著的线性影响？}
+
+\subsection{2.2 检验假设}
+\begin{itemize}
+    \item \textbf{原假设} \(H_0: \beta_2 = \beta_3 = \cdots = \beta_k = 0\)（所有解释变量的系数都等于 0，即它们对 Y 都没有影响）
+    \item \textbf{备择假设} \(H_1: \beta_j (j=2,3,\cdots,k)\) 不全为零（至少有一个解释变量对 Y 有影响）
+\end{itemize}
+注意：\(\beta_1\)（截距项）不参与检验，因为截距项是否为 0 不影响“解释变量有没有用”这个问题。
+
+\subsection{2.3 方差分析表}
+
+F 检验基于方差分析。我们把之前 TSS = ESS + RSS 的分解，结合自由度，整理成方差分析表：
+
+\begin{table}[htbp]
+\centering
+\caption{方差分析表}
+\begin{tabular}{lccc}
+\toprule
+\textbf{变差来源} & \textbf{平方和} & \textbf{自由度} & \textbf{方差（均方）} \\
+\midrule
+源于回归 & \(\displaystyle \text{ESS} = \sum_{i=1}^{n}(\hat{Y}_i - \bar{Y})^2\) & \(k-1\) & \(\text{ESS}/(k-1)\) \\
+源于残差 & \(\displaystyle \text{RSS} = \sum_{i=1}^{n}(Y_i - \hat{Y}_i)^2\) & \(n-k\) & \(\text{RSS}/(n-k)\) \\
+总变差 & \(\displaystyle \text{TSS} = \sum_{i=1}^{n}(Y_i - \bar{Y})^2\) & \(n-1\) & — \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{关键理解}：
+\begin{itemize}
+    \item “源于回归的方差” \(\text{ESS}/(k-1)\)：如果解释变量真的有用，这个值应该比较大。
+    \item “源于残差的方差” \(\text{RSS}/(n-k)\)：这是随机噪声的大小。
+    \item 如果前者远远大于后者，说明回归的解释力远超噪声，方程显著。
+\end{itemize}
+
+\subsection{2.4 F 统计量的构造与分布}
+
+在 \(H_0\) 成立（所有 \(\beta_j = 0\)）的条件下，可以证明：
+\begin{equation}
+F = \frac{\text{ESS}/(k-1)}{\text{RSS}/(n-k)} \sim F(k-1, n-k) \tag{3.46}
+\end{equation}
+即 F 统计量服从自由度为 \((k-1, n-k)\) 的 F 分布。
+
+\textbf{为什么这个分布？} 简单理解：\(\text{ESS}/(k-1)\) 和 \(\text{RSS}/(n-k)\) 都是“卡方变量除以自由度”的形式，它们的比值就是 F 分布。这是统计学的经典结论，此处不展开证明。
+
+\subsection{2.5 检验判断}
+
+给定显著性水平 \(\alpha\)（通常取 0.05），查 F 分布表得临界值 \(F_\alpha(k-1, n-k)\)。
+\begin{itemize}
+    \item 若 \(F > F_\alpha(k-1, n-k)\)：拒绝 \(H_0\)，回归方程显著——解释变量联合起来对 Y 有显著影响。
+    \item 若 \(F < F_\alpha(k-1, n-k)\)：不拒绝 \(H_0\)，回归方程不显著——解释变量联合起来对 Y 没有显著影响。
+\end{itemize}
+
+\textbf{直觉理解}：F 值大，意味着“回归解释的方差 / 残差方差”大，即回归的解释力远超噪声，不是巧合。
+
+\subsection{2.6 书上的计算例子（一步步算）}
+
+例 3.1：检验 \(H_0: \beta_2 = \beta_3 = 0\)
+
+已知：
+\begin{itemize}
+    \item \(\text{TSS} = 8,874,045,210,624\)
+    \item \(\text{RSS} = 36,623,503,360\)
+    \item \(n = 21,\; k = 3\)
+\end{itemize}
+
+\textbf{步骤 1}：算 \(\text{ESS} = \text{TSS} - \text{RSS} = 8,874,045,210,624 - 36,623,503,360 = 8,837,421,596,672\)
+
+\textbf{步骤 2}：计算 F 统计量
+\[
+F = \frac{\text{ESS}/(k-1)}{\text{RSS}/(n-k)} = \frac{8,837,421,596,672 / (3-1)}{36,623,503,360 / (21-3)} = \frac{8,837,421,596,672 / 2}{36,623,503,360 / 18}
+\]
+分子：\(8,837,421,596,672 / 2 = 4,418,710,798,336\)
+
+分母：\(36,623,503,360 / 18 = 2,034,639,080\)
+\[
+F = \frac{4,418,710,798,336}{2,034,639,080} = 2171.7418
+\]
+
+\textbf{步骤 3}：查临界值
+
+\(\alpha = 0.05\)，自由度 \((2, 18)\)，查表得 \(F_{0.05}(2, 18) = 3.55\)
+
+\textbf{步骤 4}：比较判断
+
+\(F = 2171.7418 \gg 3.55\)
+
+\textbf{结论}：拒绝 \(H_0\)。在显著性水平 0.05 下，回归方程是显著的——“国内生产总值”和“居民消费价格指数”联合起来对“货币供应量”有显著影响。
+
+F 值 2171 远超临界值 3.55，说明这根本不可能是巧合，解释力极其强。
+
+\subsection{2.7 一元回归中 F 检验与 t 检验的关系（极其详细的推导）}
+
+在一元线性回归中，只有 1 个解释变量。此时 F 检验和 t 检验是等价的。我们来严格推导为什么。
+
+\textbf{目标}：证明 \(F = t^2\)。
+
+在一元回归中，\(k = 2\)（截距 + 一个解释变量），所以：
+\[
+F = \frac{\text{ESS}/(2-1)}{\text{RSS}/(n-2)} = \frac{\text{ESS}}{\text{RSS}/(n-2)}
+\]
+
+\textbf{步骤 1}：处理分子 ESS
+\[
+\text{ESS} = \sum_{i=1}^{n}(\hat{Y}_i - \bar{Y})^2
+\]
+在一元回归中，\(\hat{Y}_i - \bar{Y} = \hat{\beta}_2(X_i - \bar{X})\)（因为回归线经过中心点 \((\bar{X}, \bar{Y})\)，预测值偏离均值的幅度 = 斜率 \(\times\) X 偏离均值的幅度）。
+
+代入：
+\[
+\text{ESS} = \sum_{i=1}^{n}[\hat{\beta}_2(X_i - \bar{X})]^2 = \hat{\beta}_2^2 \sum_{i=1}^{n}(X_i - \bar{X})^2
+\]
+
+\textbf{步骤 2}：把 ESS 代入 F
+\[
+F = \frac{\hat{\beta}_2^2 \sum (X_i - \bar{X})^2}{\text{RSS}/(n-2)}
+\]
+注意 \(\text{RSS}/(n-2) = \hat{\sigma}^2\)（残差方差），而 \(\hat{\sigma}^2 = \frac{\sum e_i^2}{n-2}\)。
+\[
+F = \frac{\hat{\beta}_2^2 \sum x_i^2}{\hat{\sigma}^2}
+\]
+
+\textbf{步骤 3}：凑出 t 的形式
+我们知道 \(\mathrm{SE}(\hat{\beta}_2) = \hat{\sigma} / \sqrt{\sum x_i^2}\)，所以 \(\hat{\sigma}^2 / \sum x_i^2 = [\mathrm{SE}(\hat{\beta}_2)]^2\)。
+\begin{equation}
+F = \frac{\hat{\beta}_2^2}{\hat{\sigma}^2 / \sum x_i^2} = \frac{\hat{\beta}_2^2}{[\mathrm{SE}(\hat{\beta}_2)]^2} = \left(\frac{\hat{\beta}_2}{\mathrm{SE}(\hat{\beta}_2)}\right)^2 = t^2 \tag{3.47}
+\end{equation}
+
+\textbf{结论}：在一元回归中，F 统计量 = t 统计量的平方。这意味着：给定显著性水平 \(\alpha\)，临界值 \(F_\alpha(1, n-2) = [t_{\alpha/2}(n-2)]^2\)。F 检验和 t 检验等价——一个显著，另一个也显著。
+
+\subsection{2.8 F 统计量与 \(R^2\) 的关系}
+
+F 检验和可决系数都基于 TSS = ESS + RSS 的分解，区别在于 F 检验考虑了自由度，\(R^2\) 没有。它们之间有直接的数量关系：
+
+\textbf{推导}：
+
+由 \(R^2 = \frac{\text{ESS}}{\text{TSS}}\)，得 \(\text{ESS} = R^2 \cdot \text{TSS}\)。
+
+由 \(R^2 = 1 - \frac{\text{RSS}}{\text{TSS}}\)，得 \(\text{RSS} = (1 - R^2) \cdot \text{TSS}\)。
+
+代入 F 统计量：
+\[
+F = \frac{\text{ESS}/(k-1)}{\text{RSS}/(n-k)} = \frac{R^2 \cdot \text{TSS} / (k-1)}{(1-R^2) \cdot \text{TSS} / (n-k)}
+\]
+TSS 约掉了：
+\begin{equation}
+F = \frac{R^2/(k-1)}{(1-R^2)/(n-k)} = \frac{n-k}{k-1} \cdot \frac{R^2}{1-R^2} \tag{3.48}
+\end{equation}
+
+\textbf{直观理解}：
+\begin{itemize}
+    \item 当 \(R^2 = 0\) 时，\(F = 0\)——完全没拟合，当然不显著。
+    \item 当 \(R^2\) 越大时，\(\frac{R^2}{1-R^2}\) 越大，F 值越大——拟合越好，方程越显著。
+    \item 当 \(R^2 = 1\) 时，\(F \to \infty\)——完美拟合，F 值无穷大。
+\end{itemize}
+这说明 F 检验和 \(R^2\) 的判断方向一致，但 F 检验更严格——它在给定显著性水平下给出统计意义上严格的结论（拒绝或不拒绝），而 \(R^2\) 只能说“越大越好”，没有确定的标准。
+
+\textbf{等价性}：对 \(H_0: \beta_2 = \cdots = \beta_k = 0\) 的 F 检验，实际上等价于对 \(R^2 = 0\) 的检验。
+
+\section{第三步：回归参数的显著性检验（t 检验）——每个变量单独来看有没有用？}
+
+\subsection{3.1 我们要解决什么问题？}
+
+F 检验告诉我们“方程整体显著”——至少有一个解释变量对 Y 有影响。但到底哪些变量有用、哪些没用？F 检验回答不了。
+
+多元回归分析的目的，不仅是获得高拟合优度，也不仅是确认方程整体显著，而是要对每个解释变量分别检验：\textbf{当其他解释变量不变时，这个变量对 Y 是否有显著影响？}
+
+这就是 t 检验的任务。
+
+\subsection{3.2 回归系数估计量的分布（从正态到 t）}
+
+由参数估计量的性质，我们已经知道回归系数估计量服从正态分布（式3.34）：
+\[
+\hat{\beta}_j \sim N[\beta_j, \mathrm{Var}(\hat{\beta}_j)]
+\]
+标准化后服从标准正态分布：
+\begin{equation}
+Z = \frac{\hat{\beta}_j - \beta_j}{\sqrt{\mathrm{Var}(\hat{\beta}_j)}} \sim N(0,1) \tag{3.49}
+\end{equation}
+
+\textbf{但有个问题}：\(\mathrm{Var}(\hat{\beta}_j) = \sigma^2 c_{jj}\)（式3.32），而总体方差 \(\sigma^2\) 未知！
+
+解决办法：用样本估计量 \(\hat{\sigma}^2\) 代替 \(\sigma^2\)。可以证明，替换后构造的统计量服从 t 分布：
+\begin{equation}
+t = \frac{\hat{\beta}_j - \beta_j}{\sqrt{\hat{\sigma}^2 c_{jj}}} = \frac{\hat{\beta}_j - \beta_j}{\hat{\sigma}\sqrt{c_{jj}}} \sim t(n-k) \tag{3.50}
+\end{equation}
+
+\textbf{为什么是 t 分布而不是正态分布？} 因为 \(\hat{\sigma}^2\) 本身也是随机变量（用残差估算的），引入了额外的不确定性。用估计量替换真实参数后，分母不再固定，统计量的尾部比标准正态更厚，这正是 t 分布的特征。自由度为 \(n-k\)，因为估计了 \(k\) 个参数，消耗了 \(k\) 个自由度。
+
+\subsection{3.3 t 检验的具体步骤}
+
+\subsubsection{步骤 1：提出检验假设}
+\[
+H_0: \beta_j = 0 \quad (j = 1, 2, \cdots, k)
+\]
+\[
+H_1: \beta_j \neq 0 \quad (j = 1, 2, \cdots, k)
+\]
+原假设的含义：在其他解释变量不变的情况下，解释变量 \(X_j\) 对 Y 没有影响。
+
+\subsubsection{步骤 2：计算统计量}
+在 \(H_0\) 成立（\(\beta_j = 0\)）的条件下，式（3.50）变为：
+\begin{equation}
+t = \frac{\hat{\beta}_j - 0}{\hat{\sigma}\sqrt{c_{jj}}} = \frac{\hat{\beta}_j}{\hat{\sigma}\sqrt{c_{jj}}} \sim t(n-k) \tag{3.51}
+\end{equation}
+根据样本观测值计算 t 统计量的值：
+\begin{equation}
+t = \frac{\hat{\beta}_j}{\hat{\sigma}\sqrt{c_{jj}}} \tag{3.52}
+\end{equation}
+
+\textbf{每个符号的意思}：
+\begin{itemize}
+    \item \(\hat{\beta}_j\)：第 \(j\) 个回归系数的估计值。
+    \item \(\hat{\sigma}\)：残差标准差（\(\hat{\sigma} = \sqrt{\text{RSS}/(n-k)}\)）。
+    \item \(c_{jj}\)：矩阵 \((X'X)^{-1}\) 的第 \(j\) 个对角线元素。
+\end{itemize}
+
+\subsubsection{步骤 3：检验判断}
+给定显著性水平 \(\alpha\)，查自由度为 \(n-k\) 的 t 分布表，得临界值 \(t_{\alpha/2}(n-k)\)。
+\begin{itemize}
+    \item 若 \(|t| \geq t_{\alpha/2}(n-k)\)：拒绝 \(H_0\)，说明在其他解释变量不变的情况下，\(X_j\) 对 Y 的影响是显著的。
+    \item 若 \(|t| < t_{\alpha/2}(n-k)\)：不能拒绝 \(H_0\)，说明 \(X_j\) 对 Y 的影响不显著。
+\end{itemize}
+
+\textbf{经验判断规则}：从 t 分布表可知，当 \(\alpha = 0.05\) 且自由度大于 10 时，临界值 \(t_{\alpha/2}\) 基本接近 2。因此，如果 t 统计量的绝对值明显超过 2，可以粗略判断在 0.05 水平下显著。
+
+\subsection{3.4 书上的计算例子（一步步算）}
+
+例 3.1：检验 \(H_0: \beta_2 = 0\) 和 \(H_0: \beta_3 = 0\)
+
+已知：
+\begin{itemize}
+    \item \(\alpha = 0.05\)
+    \item \(n - k = 21 - 3 = 18\)
+    \item 临界值 \(t_{0.025}(18) = 2.101\)
+    \item \(\hat{\sigma} = 45106.974\)
+\end{itemize}
+
+\textbf{检验 \(\beta_2\)（国内生产总值的系数）：}
+
+已知 \(\hat{\beta}_2 = 2.878165\)，\(\sqrt{c_{22}} = 0.000005101\)
+\[
+t_{\beta_2} = \frac{2.878165}{45106.974 \times 0.000005101} = \frac{2.878165}{0.2301} \approx 12.51
+\]
+
+\textbf{检验 \(\beta_3\)（居民消费价格指数的系数）：}
+
+已知 \(\hat{\beta}_3 = -2601.117\)，\(\sqrt{c_{33}} = 0.01830836\)
+\[
+t_{\beta_3} = \frac{-2601.117}{45106.974 \times 0.01830836} = \frac{-2601.117}{826.0} \approx -3.15
+\]
+
+\textbf{判断}：
+\begin{itemize}
+    \item \(|t_{\beta_2}| = 12.51 > 2.101\) \(\to\) 拒绝 \(H_0\)，GDP 对货币供应量影响显著
+    \item \(|t_{\beta_3}| = 3.15 > 2.101\) \(\to\) 拒绝 \(H_0\)，CPI 对货币供应量影响显著
+\end{itemize}
+两个解释变量在 0.05 水平下都显著。
+
+\textbf{提醒}：如果某个解释变量不显著，说明它对 Y 可能没有实质影响，应该考虑从模型中剔除，重新建立模型。
+
+\section{第四步：参数的区间估计——真实值大概落在什么范围？}
+
+\subsection{4.1 我们要解决什么问题？}
+
+点估计只给了一个数字（比如 \(\hat{\beta}_2 = 2.878\)），但真实值 \(\beta_2\) 几乎不可能恰好等于这个数字。我们想知道：真实值大概落在什么范围内？这个范围有多可靠？
+
+这就是区间估计——在点估计的基础上，给出一个区间，并告诉你这个区间包含真实值的概率有多大。
+
+\subsection{4.2 置信区间的推导（极其详细，无跳步）}
+
+我们已经知道（式3.50）：
+\begin{equation}
+t^* = \frac{\hat{\beta}_j - \beta_j}{\hat{\sigma}\sqrt{c_{jj}}} \sim t(n-k) \tag{3.53}
+\end{equation}
+
+给定显著性水平 \(\alpha\)，查 t 分布表得临界值 \(t_{\alpha/2}(n-k)\)，使得：
+\[
+P\left[-t_{\alpha/2}(n-k) \leq t^* = \frac{\hat{\beta}_j - \beta_j}{\hat{\sigma}\sqrt{c_{jj}}} \leq t_{\alpha/2}(n-k)\right] = 1 - \alpha
+\]
+
+\textbf{步骤 1}：把 \(t^*\) 的定义代入不等式
+\[
+P\left[-t_{\alpha/2}(n-k) \leq \frac{\hat{\beta}_j - \beta_j}{\hat{\sigma}\sqrt{c_{jj}}} \leq t_{\alpha/2}(n-k)\right] = 1 - \alpha
+\]
+
+\textbf{步骤 2}：对不等式各部分乘以 \(\hat{\sigma}\sqrt{c_{jj}}\)（正数，不改变不等号方向）
+\[
+P\left[-t_{\alpha/2} \cdot \hat{\sigma}\sqrt{c_{jj}} \leq \hat{\beta}_j - \beta_j \leq t_{\alpha/2} \cdot \hat{\sigma}\sqrt{c_{jj}}\right] = 1 - \alpha
+\]
+
+\textbf{步骤 3}：把 \(\hat{\beta}_j\) 移到一边，\(\beta_j\) 移到另一边。对不等式每一部分同时减去 \(\hat{\beta}_j\) 再乘以 \(-1\)（改变不等号方向）：
+\begin{equation}
+P\left[\hat{\beta}_j - t_{\alpha/2}\hat{\sigma}\sqrt{c_{jj}} \leq \beta_j \leq \hat{\beta}_j + t_{\alpha/2}\hat{\sigma}\sqrt{c_{jj}}\right] = 1 - \alpha \tag{3.54}
+\end{equation}
+
+\textbf{结论}：\(\beta_j\) 的置信度为 \(1 - \alpha\) 的置信区间为：
+\[
+[\hat{\beta}_j - t_{\alpha/2}\hat{\sigma}\sqrt{c_{jj}},\; \hat{\beta}_j + t_{\alpha/2}\hat{\sigma}\sqrt{c_{jj}}]
+\]
+
+\textbf{直觉理解}：点估计 \(\hat{\beta}_j\) 是中心，向左右各扩展 \(t_{\alpha/2} \cdot \mathrm{SE}(\hat{\beta}_j)\) 的宽度。置信度 \(1-\alpha\) 越高（比如 99\% 比 95\%），\(t_{\alpha/2}\) 越大，区间越宽——你越确定真实值在区间里，区间就越宽，这是代价。
+
+\subsection{4.3 书上的计算例子（一步步算）}
+
+例 3.1 的参数，取 \(\alpha = 0.05\)，则 \(1 - \alpha = 0.95\)，\(t_{0.025}(18) = 2.101\)
+
+\textbf{\(\beta_2\) 的 95\% 置信区间：}
+
+已知 \(\hat{\beta}_2 = 2.878165\)，\(\hat{\sigma}\sqrt{c_{22}} = 45106.974 \times 0.000005101 = 0.2301\)
+
+下界：\(2.878165 - 2.101 \times 0.2301 = 2.878165 - 0.4835 = 2.3947\)
+
+上界：\(2.878165 + 2.101 \times 0.2301 = 2.878165 + 0.4835 = 3.3616\)
+\[
+P[2.3947 \leq \beta_2 \leq 3.3616] = 0.95
+\]
+
+\textbf{\(\beta_3\) 的 95\% 置信区间：}
+
+已知 \(\hat{\beta}_3 = -2601.117\)，\(\hat{\sigma}\sqrt{c_{33}} = 45106.974 \times 0.01830836 = 826.0\)
+
+下界：\(-2601.117 - 2.101 \times 826.0 = -2601.117 - 1735.1 = -4336.2\)
+
+上界：\(-2601.117 + 2.101 \times 826.0 = -2601.117 + 1735.1 = -866.0\)
+\[
+P[-4336.2 \leq \beta_3 \leq -866.0] = 0.95
+\]
+
+注意 \(\beta_3\) 的置信区间不包含 0，这和 t 检验的结论一致——如果在 0.05 水平下拒绝 \(\beta_j = 0\)，那么 \(1-\alpha\) 置信区间一定不包含 0。
+
+\section{总结}
+
+整篇文章的逻辑链条如下：
+
+\begin{table}[htbp]
+\centering
+\caption{检验方法对比总结}
+\begin{tabular}{p{2.5cm}p{3.5cm}p{4.5cm}p{4cm}}
+\toprule
+\textbf{检验方法} & \textbf{要回答的问题} & \textbf{核心统计量} & \textbf{判断准则} \\
+\midrule
+\(R^2\) / \(\bar{R}^2\) & 模型拟合得好不好？ & \(R^2 = \text{ESS}/\text{TSS}\)，\(\bar{R}^2 = 1 - \frac{n-1}{n-k}(1-R^2)\) & 越接近 1 越好，\(\bar{R}^2\) 考虑了自由度 \\
+F 检验 & 所有解释变量联合起来有没有用？ & \(F = \frac{\text{ESS}/(k-1)}{\text{RSS}/(n-k)}\) & \(F > F_\alpha(k-1, n-k)\) 则拒绝 \(H_0\) \\
+t 检验 & 某个解释变量单独有没有用？ & \(t = \hat{\beta}_j / (\hat{\sigma}\sqrt{c_{jj}})\) & \(|t| > t_{\alpha/2}(n-k)\) 则拒绝 \(H_0\) \\
+区间估计 & 真实参数大概在什么范围？ & \(\hat{\beta}_j \pm t_{\alpha/2}\hat{\sigma}\sqrt{c_{jj}}\) & 置信度 \(1-\alpha\) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+它们之间的关联：
+\begin{enumerate}
+    \item \textbf{\(R^2\) 和 F 的关系}：\(F = \frac{n-k}{k-1} \cdot \frac{R^2}{1-R^2}\)，\(R^2\) 越大，F 越大，两者方向一致。但 \(R^2\) 没有严格的判断标准，F 检验有。
+    \item \textbf{F 检验和 t 检验的关系}：F 检验看的是“整体”，t 检验看的是“个体”。一元回归中 \(F = t^2\)，两者等价；多元回归中，方程整体显著（F 显著）不代表每个变量都显著（需逐一做 t 检验）。
+    \item \textbf{t 检验和区间估计的关系}：如果在 \(\alpha\) 水平下 t 检验拒绝 \(\beta_j = 0\)，那么 \(1-\alpha\) 置信区间一定不包含 0——两者等价。
+\end{enumerate}
+
+\end{document}
