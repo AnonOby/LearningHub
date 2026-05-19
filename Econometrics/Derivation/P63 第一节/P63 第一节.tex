@@ -1,0 +1,211 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+% 页面设置
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+
+% 数学与符号宏包
+\usepackage{amsmath,amssymb}
+
+% 页眉页脚设置
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% 矩阵与向量格式
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\mat}[1]{\mathbf{#1}}
+
+\begin{document}
+
+% 标题
+\title{\textbf{多元线性回归模型及古典假定}}
+\author{}
+\date{}
+\maketitle
+
+\section*{第一步：我们要解决什么问题？（从简单走向多元）}
+
+想象一下，你是一个小镇的市长，你想研究到底是什么影响了老百姓的消费支出（\(Y\)）。
+在简单线性回归里，我们只找了一个原因，比如“收入（\(X\)）”。我们画了一条线来拟合数据，这就是一元回归。
+但现实世界哪有这么简单？除了收入，难道“财富积累”、“年龄”、“预期未来收入”不会影响消费吗？
+如果我们就只盯着“收入”这一个因素，而把其他重要因素忽略了，这些被忽略的因素就会跑到“随机扰动项（\(u\)）”里去捣乱，导致我们的模型出现“设定误差”——也就是瞎建模。
+
+所以，我们需要一种能同时把多个因素（\(X\)）都放进模型里的方法，这就叫\textbf{多元线性回归模型}。
+
+\section*{第二步：多元线性回归模型的基本面貌（标量形式）}
+
+\subsection*{2.1 先看一个实例：如何把非线性的东西变成线性的？}
+书上举了一个非常有名的经济学函数：柯布-道格拉斯生产函数。
+\begin{equation*}
+Y = AK^\alpha L^\beta u \tag{3.1}
+\end{equation*}
+别被字母吓到，我们来逐一拆解：
+\begin{itemize}
+\item \textbf{\(Y\)}：总产出（比如一家工厂生产了多少东西）。
+\item \textbf{\(K\)}：投入的资本（机器、厂房）。
+\item \textbf{\(L\)}：投入的劳动力（工人数量）。
+\item \textbf{\(A\)}：技术水平（一个常数基数）。
+\item \textbf{\(\alpha\) 和 \(\beta\)}：资本和劳动力的弹性（也就是\(K\)和\(L\)增加1\%，\(Y\)能增加百分之几）。
+\item \textbf{\(u\)}：随机扰动项（不可控的因素，比如突然停电、工人生病）。
+\end{itemize}
+
+\textbf{发现问题了吗？} 这里的\(K\)和\(L\)是带着指数（\(\alpha, \beta\)）相乘的，这不是线性关系！我们没法直接用线性回归算。
+
+\textbf{解决办法：取自然对数（\(\ln\)）！}
+数学里有一条黄金法则：乘积变相加，指数变系数。我们对等式两边同时取自然对数：
+等式左边：\(\ln(Y)\)
+等式右边：\(\ln(A \cdot K^\alpha \cdot L^\beta \cdot u)\)
+
+我们一步步拆开右边的对数（对数性质：\(\ln(AB) = \ln A + \ln B\)，\(\ln(A^b) = b\ln A\)）：
+\begin{align*}
+\ln Y &= \ln A + \ln(K^\alpha) + \ln(L^\beta) + \ln u \\
+\ln Y &= \ln A + \alpha \ln K + \beta \ln L + \ln u
+\end{align*}
+\begin{equation*}
+\ln Y = \ln A + \alpha \ln K + \beta \ln L + \ln u \tag{3.2}
+\end{equation*}
+这就是公式（3.2）！你看，现在变量变成了 \(\ln K\) 和 \(\ln L\)，它们前面都是常数系数（\(\alpha, \beta\)），加号连接。这就变成了一个标准的二元线性回归模型！这个过程叫做\textbf{模型的线性化}。
+
+\subsection*{2.2 多元总体线性回归函数的一般形式}
+有了上面的铺垫，我们写出包含\(k\)个解释变量的一般公式（3.5）：
+\begin{equation*}
+Y_i = \beta_1 + \beta_2 X_{2i} + \beta_3 X_{3i} + \cdots + \beta_k X_{ki} + u_i \tag{3.5}
+\end{equation*}
+
+每一个符号是什么意思？
+\begin{itemize}
+\item \textbf{\(Y_i\)}：第 \(i\) 个观测值的被解释变量（比如第 \(i\) 个人的消费）。
+\item \textbf{\(X_{2i}, X_{3i}, \dots, X_{ki}\)}：第 \(i\) 个观测值的第2个、第3个……第\(k\)个解释变量（注意：下标的前面是变量编号，后面是样本编号）。
+\item \textbf{\(\beta_1\)}：截距项。就像基础消费，不管你收入多少，都得花这么多钱维持生存。
+\item \textbf{\(\beta_2, \beta_3, \dots, \beta_k\)}：\textbf{偏回归系数}（极其重要，下面单独讲）。
+\item \textbf{\(u_i\)}：随机扰动项（观测不到的微小因素）。
+\end{itemize}
+
+\subsection*{2.3 灵魂概念：什么是“偏回归系数”？}
+在一元回归里，斜率表示“\(X\)变1个单位，\(Y\)变多少”。
+在多元回归里，\(\beta_2\) 表示：\textbf{在其他变量（\(X_3\dots X_k\)）保持不变（被控制住）的情况下，\(X_2\) 变动1个单位，引起 \(Y_i\) 的变动量。}
+\emph{比喻：}如果你研究消费（\(Y\)）受收入（\(X_2\)）和财富（\(X_3\)）影响。\(\beta_2\) 就是“假设两个人的财富一模一样，收入多1块钱，消费多多少”。这就排除了财富的干扰，让我们看到了收入的“净影响”。
+
+\subsection*{2.4 样本回归函数（我们用样本去猜总体）}
+总体是我们看不到的，我们只能用样本去估计。所以把真实的 \(\beta\) 换成估计值 \(\hat{\beta}\)，把真实的 \(u\) 换成残差 \(e\)。
+\begin{equation*}
+\hat{Y}_i = \hat{\beta}_1 + \hat{\beta}_2 X_{2i} + \cdots + \hat{\beta}_k X_{ki} \tag{3.7}
+\end{equation*}
+\begin{equation*}
+Y_i = \hat{Y}_i + e_i \quad \text{（真实值 = 预测值 + 残差）} \tag{3.8}
+\end{equation*}
+
+\section*{第三步：让书写变简单——多元线性回归的矩阵形式}
+
+写一长串 \(X_2, X_3\dots\) 太累了，还容易看花眼。数学家发明了矩阵，把一长串方程压缩成了极简的几个字母。
+
+\subsection*{3.1 方程组的堆叠（公式3.9）}
+假设我们有 \(n\) 个样本，对于第1个人：
+\begin{align*}
+Y_1 &= \beta_1 + \beta_2 X_{21} + \cdots + \beta_k X_{k1} + u_1 \\
+Y_2 &= \beta_1 + \beta_2 X_{22} + \cdots + \beta_k X_{k2} + u_2 \\
+&\vdots \\
+Y_n &= \beta_1 + \beta_2 X_{2n} + \cdots + \beta_k X_{kn} + u_n
+\end{align*}
+\begin{align}
+Y_1 &= \beta_1 + \beta_2 X_{21} + \cdots + \beta_k X_{k1} + u_1 \tag{3.9}\\
+Y_2 &= \beta_1 + \beta_2 X_{22} + \cdots + \beta_k X_{k2} + u_2 \notag\\
+&\vdots \notag\\
+Y_n &= \beta_1 + \beta_2 X_{2n} + \cdots + \beta_k X_{kn} + u_n \notag
+\end{align}
+
+\subsection*{3.2 把方程装进盒子里（公式3.10 -- 3.11）}
+我们把等号左边的\(Y\)全摘出来，竖着排成一列，这就是\textbf{被解释变量向量 \(\vect{Y}\)}（维度：\(n\times 1\)）：
+\[
+\vect{Y} = \begin{bmatrix} Y_1 \\ Y_2 \\ \vdots \\ Y_n \end{bmatrix}
+\]
+
+把右边的\(X\)全摘出来，排成一个表格，这就是\textbf{解释变量矩阵 \(\mat{X}\)}（维度：\(n\times k\)）：
+\[
+\mat{X} = \begin{bmatrix}
+1 & X_{21} & \cdots & X_{k1} \\
+1 & X_{22} & \cdots & X_{k2} \\
+\vdots & \vdots & \ddots & \vdots \\
+1 & X_{2n} & \cdots & X_{kn}
+\end{bmatrix}
+\]
+\emph{极其关键的细节：}第一列全是1！为什么？因为 \(\beta_1\) 是截距项，它没有乘\(X\)，其实是乘了1。为了矩阵乘法能对齐，必须加一列全1。
+
+把系数排成一列，这就是\textbf{参数向量 \(\boldsymbol{\beta}\)}（维度：\(k\times 1\)）：
+\[
+\boldsymbol{\beta} = \begin{bmatrix} \beta_1 \\ \beta_2 \\ \vdots \\ \beta_k \end{bmatrix}
+\]
+
+把扰动项排成一列，这就是\textbf{随机扰动项向量 \(\vect{U}\)}（维度：\(n\times 1\)）：
+\[
+\vect{U} = \begin{bmatrix} u_1 \\ u_2 \\ \vdots \\ u_n \end{bmatrix}
+\]
+
+现在，那一长串方程变成了极其优雅的矩阵等式（3.11）：
+\begin{equation}
+\vect{Y} = \mat{X}\boldsymbol{\beta} + \vect{U} \tag{3.11}
+\end{equation}
+
+同理，样本的矩阵形式（3.13, 3.14）就是：
+\begin{equation}
+\vect{Y} = \mat{X}\hat{\boldsymbol{\beta}} + \vect{e} \tag{3.13, 3.14}
+\end{equation}
+（其中 \(\hat{\boldsymbol{\beta}}\) 是估计值向量，\(\vect{e}\) 是残差向量）
+
+\section*{第四步：游戏的规则——多元线性回归模型的古典假定}
+
+要想用最小二乘法（OLS）算出来的 \(\hat{\boldsymbol{\beta}}\) 是靠谱的（无偏、有效），总体模型必须满足5个前提假定。这些假定是一切推导的基石。
+
+\noindent\textbf{假定1：零均值假定 —— 扰动项是个纯粹的白噪声}
+\begin{itemize}
+\item 标量表达：\(E(u_i) = 0\) （对任何第\(i\)个观测，扰动项的期望为0）
+\item 矩阵表达：\(E(\vect{U}) = \vect{0}\) （一个全是0的\(n\times1\)列向量）
+\item \emph{大白话：}扰动项有时正有时负，但平均来看它不偏不倚，不带有系统性的偏差。
+\end{itemize}
+
+\noindent\textbf{假定2：同方差和无自相关假定 —— 扰动项不乱蹦}
+\begin{itemize}
+\item 同方差标量：\(\mathrm{Var}(u_i) = E(u_i^2) = \sigma^2\) （每个扰动项的波动幅度一样大）
+\item 无自相关标量：\(\mathrm{Cov}(u_i, u_j) = E(u_i u_j) = 0\) (\(i \neq j\)) （不同观测的扰动项互不干扰，张三的误差不影响李四）
+\item 矩阵表达：
+\begin{equation}
+\mathrm{Var-Cov}(\vect{U}) = E(\vect{U}\vect{U}') = \sigma^2 \mat{I}_n \tag{3.16, 3.17}
+\end{equation}
+\begin{itemize}
+\item \emph{拆解这个看起来吓人的矩阵：}\(\vect{U}\vect{U}'\) 是一个\(n\times n\)的方阵。对角线上的元素是 \(u_i^2\)，取期望变成 \(\sigma^2\)（同方差）；非对角线上的元素是 \(u_i u_j\)，取期望变成0（无自相关）。所以整个矩阵，对角线全是 \(\sigma^2\)，其他全是0，正好乘以一个单位矩阵 \(\mat{I}_n\)！
+\end{itemize}
+\end{itemize}
+
+\noindent\textbf{假定3：随机扰动项与解释变量不相关 —— X里没有混入u}
+\begin{itemize}
+\item 表达：\(\mathrm{Cov}(X_{ji}, u_i) = 0\)
+\item \emph{大白话：}解释变量\(X\)是外生的，它不是由\(u\)决定的。比如你研究收入对消费的影响，收入这个变量本身不是由模型里的随机误差决定的。
+\end{itemize}
+
+\noindent\textbf{假定4：无多重共线性假定 —— 解释变量之间不能互相抄}
+\begin{itemize}
+\item 表达：矩阵 \(\mat{X}\) 的列满秩，\(\mathrm{Rank}(\mat{X}) = k\) （公式3.20）；方阵 \(\mat{X}'\mat{X}\) 满秩，\(\mathrm{Rank}(\mat{X}'\mat{X}) = k\) 且可逆（公式3.21）。
+\item \emph{大白话：}你放进模型里的\(k\)个\(X\)变量，必须各自提供独立的信息，不能有一个\(X\)是可以由其他\(X\)加减乘除算出来的。
+\item \emph{为什么必须可逆？} 因为后续推导参数估计量时，公式里一定会出现 \((\mat{X}'\mat{X})^{-1}\)。如果矩阵不可逆（行列式为0），除以0就天塌了，算不出参数！
+\end{itemize}
+
+\noindent\textbf{假定5：正态性假定 —— 为了做假设检验}
+\begin{itemize}
+\item 表达：\(u_i \sim N(0, \sigma^2)\)
+\item 矩阵表达：\(\vect{U} \sim N(\vect{0}, \sigma^2 \mat{I}_n)\)
+\item \emph{大白话：}扰动项不仅均值为0、方差为 \(\sigma^2\)，而且它的分布是完美的钟形曲线（正态分布）。这个假定在后续做 t 检验、F 检验时是必须的。
+\end{itemize}
+
+\section*{第五步：总结}
+
+整篇内容的逻辑链条如下：
+\begin{enumerate}
+\item \textbf{为什么要多元}：现实影响因素多，一元不够用；非线性可以通过取对数变成多元线性。
+\item \textbf{标量到矩阵}：多元模型写一长串太繁琐，用矩阵 \(\vect{Y} = \mat{X}\boldsymbol{\beta} + \vect{U}\) 压缩表达，且矩阵运算在计算机（如EViews）中运行极快。
+\item \textbf{核心概念}：偏回归系数意味着“控制其他变量不变时的净影响”。
+\item \textbf{古典假定}：为了让OLS估计量具备“优良性质（BLUE）”，必须满足零均值、同方差无自相关、外生性、无多重共线性和正态性这五大游戏规则。后续所有的研究方法，都建立在这5条规则成立的基础之上。
+\end{enumerate}
+
+\end{document}
