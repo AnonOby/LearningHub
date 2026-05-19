@@ -1,0 +1,385 @@
+\documentclass[12pt,a4paper]{ctexart}
+
+% === 页面设置 ===
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+
+% === 数学与符号 ===
+\usepackage{amsmath,amssymb}
+
+% === 超链接支持（提供 \texorpdfstring 命令） ===
+\usepackage{hyperref}
+
+% === 表格 ===
+\usepackage{booktabs}
+
+% === 页眉页脚 ===
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+% === 其他 ===
+\usepackage{array}
+
+% 算子定义
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\E}{E}
+
+\begin{document}
+
+% 关闭所有章节自动编号（标题中已含“第四节”、“一、”等手动编号）
+\setcounter{secnumdepth}{0}
+
+\section{第四节 多元线性回归模型的预测}
+
+多元线性回归模型用于经济预测，是指在各个解释变量给定样本以外的数值 $X_f = (1, X_{2f}, X_{3f}, \cdots, X_{kf})$ 的条件下，对预测期被解释变量 $Y$ 的平均值 $\E(Y_f)$ 及个别值 $Y_f$ 进行估计，这种预测也分为点预测与区间预测。
+
+\subsection{一、点预测}
+
+\textbf{1.1 模型的设定}
+
+设多元线性回归模型为
+\begin{equation}
+Y = X\beta + U \tag{A}
+\end{equation}
+其中 $Y$ 为 $n \times 1$ 的被解释变量观测值向量，$X$ 为 $n \times k$ 的解释变量观测值矩阵（第一列为全1向量），$\beta$ 为 $k \times 1$ 的参数向量，$U$ 为 $n \times 1$ 的随机扰动项向量，且满足经典假定：$\E(U)=0$，$\Var(U)=\sigma^2 I_n$。
+
+若根据观测的样本已经估计出参数的估计量 $\hat{\beta}$，且模型通过检验，即得到样本回归方程：
+\[
+\hat{Y} = X\hat{\beta}
+\]
+
+\textbf{1.2 点预测值的计算}
+
+把样本以外各个解释变量的值表示为行向量 $X_f = (1, X_{2f}, X_{3f}, \cdots, X_{kf})$，直接代入所估计的多元样本回归函数，就可以计算出被解释变量的点预测值 $\hat{Y}_f$：
+\begin{align}
+\hat{Y}_f &= X_f \hat{\beta} \nonumber \\
+&= \hat{\beta}_1 + \hat{\beta}_2 X_{2f} + \hat{\beta}_3 X_{3f} + \cdots + \hat{\beta}_k X_{kf} \tag{3.55}
+\end{align}
+
+这里需要解释：$X_f$ 是一个 $1 \times k$ 的行向量，$\hat{\beta}$ 是一个 $k \times 1$ 的列向量，因此 $X_f\hat{\beta}$ 是一个标量（一个数值），这正是我们想要的——对 $Y_f$ 的一个具体预测数值。
+
+\textbf{1.3 无偏性的证明}
+
+对式（3.55）两边取期望。这里的关键问题是：\textbf{$X_f$ 是给定的非随机向量，而 $\hat{\beta}$ 是随机向量}（因为它依赖于样本），所以我们只对 $\hat{\beta}$ 取期望：
+\begin{equation}
+\E(\hat{Y}_f) = \E(X_f \hat{\beta}) = X_f \E(\hat{\beta}) \tag{*}
+\end{equation}
+最后一步用到了：$X_f$ 是非随机的，可以提到期望符号外面。
+
+现在需要用到 $\hat{\beta}$ 的性质。由OLS估计量的公式：
+\[
+\hat{\beta} = (X'X)^{-1}X'Y
+\]
+将 $Y = X\beta + U$ 代入：
+\[
+\hat{\beta} = (X'X)^{-1}X'(X\beta + U)
+\]
+展开：
+\[
+= (X'X)^{-1}X'X\beta + (X'X)^{-1}X'U
+\]
+\[
+= \beta + (X'X)^{-1}X'U
+\]
+对两边取期望：
+\[
+\E(\hat{\beta}) = \E(\beta + (X'X)^{-1}X'U) = \beta + (X'X)^{-1}X'\E(U)
+\]
+由经典假定 $\E(U)=0$：
+\begin{equation}
+\E(\hat{\beta}) = \beta \tag{**}
+\end{equation}
+即 $\hat{\beta}$ 是 $\beta$ 的无偏估计量。将 (**) 代入 (*)：
+\begin{equation}
+\E(\hat{Y}_f) = X_f \beta = \beta_1 + \beta_2 X_{2f} + \beta_3 X_{3f} + \cdots + \beta_k X_{kf} \tag{3.56}
+\end{equation}
+而预测期的真实均值为：
+\[
+\E(Y_f) = \E(X_f\beta + u_f) = X_f\beta + \E(u_f) = X_f\beta
+\]
+其中 $u_f$ 是预测期的随机扰动项，由假定 $\E(u_f)=0$。因此：
+\[
+\E(\hat{Y}_f) = \E(Y_f)
+\]
+说明 $\hat{Y}_f$ 是 $\E(Y_f)$ 的无偏估计，从而可以用 $\hat{Y}_f$ 作为 $\E(Y_f)$ 和 $Y_f$ 的点预测值。
+
+\subsection{二、平均值 \texorpdfstring{$\E(Y_f)$}{E(Yf)} 的区间预测}
+
+为了对预测期平均值 $\E(Y_f)$ 作区间预测，必须明确得到的点预测值 $\hat{Y}_f$ 与预测期平均值 $\E(Y_f)$ 的关系，并分析其概率分布性质。
+
+\textbf{2.1 偏差的定义}
+
+如果记 $\hat{Y}_f$ 和 $\E(Y_f)$ 的偏差为 $w_f$，即
+\begin{equation}
+w_f = \hat{Y}_f - \E(Y_f) \tag{3.57}
+\end{equation}
+
+\textbf{2.2 $w_f$ 期望的推导}
+\[
+\E(w_f) = \E[\hat{Y}_f - \E(Y_f)] = \E(\hat{Y}_f) - \E(Y_f)
+\]
+由1.3节已证 $\E(\hat{Y}_f) = \E(Y_f)$，所以：
+\begin{equation}
+\E(w_f) = 0 \tag{3.58}
+\end{equation}
+
+\textbf{2.3 $w_f$ 方差的推导（教材以“可以证明”略过，此处完整补出）}
+
+\noindent\textbf{第一步：将 $w_f$ 用 $\hat{\beta}-\beta$ 表示。}
+\[
+w_f = \hat{Y}_f - \E(Y_f) = X_f\hat{\beta} - X_f\beta = X_f(\hat{\beta} - \beta)
+\]
+这里 $X_f$ 是非随机的，$\hat{\beta}-\beta$ 是随机的。
+
+\noindent\textbf{第二步：将 $\hat{\beta}-\beta$ 用 $U$ 表示。}
+由1.3节已推导：
+\[
+\hat{\beta} = \beta + (X'X)^{-1}X'U
+\]
+移项得：
+\begin{equation}
+\hat{\beta} - \beta = (X'X)^{-1}X'U \tag{***}
+\end{equation}
+
+\noindent\textbf{第三步：将 $w_f$ 用 $U$ 表示。}
+将 (***) 代入 $w_f$ 的表达式：
+\[
+w_f = X_f(\hat{\beta}-\beta) = X_f(X'X)^{-1}X'U
+\]
+这是一个关于 $U$ 的线性表达式。$X_f$、$(X'X)^{-1}$、$X'$ 都是\textbf{非随机}的矩阵，$U$ 是唯一的随机部分。
+
+\noindent\textbf{第四步：计算 $\Var(w_f)$。}
+利用方差的性质：对于非随机矩阵 $A$ 和随机向量 $Z$，有 $\Var(AZ) = A\,\Var(Z)\,A'$。
+
+这里令 $A = X_f(X'X)^{-1}X'$（一个 $1 \times n$ 的行向量），$Z = U$（$n \times 1$），则 $w_f = AU$。
+\[
+\Var(w_f) = A \cdot \Var(U) \cdot A'
+\]
+由经典假定 $\Var(U) = \sigma^2 I_n$：
+\[
+\Var(w_f) = X_f(X'X)^{-1}X' \cdot \sigma^2 I_n \cdot [X_f(X'X)^{-1}X']'
+\]
+
+\noindent\textbf{第五步：计算转置。}
+注意到 $[X_f(X'X)^{-1}X']' = X \cdot [(X'X)^{-1}]' \cdot X_f'$。
+因为 $(X'X)^{-1}$ 是对称矩阵（$X'X$ 是对称的，其逆也是对称的），所以 $[(X'X)^{-1}]' = (X'X)^{-1}$。
+因此：
+\[
+[X_f(X'X)^{-1}X']' = X(X'X)^{-1}X_f'
+\]
+
+\noindent\textbf{第六步：化简。}
+\[
+\Var(w_f) = \sigma^2 \cdot X_f(X'X)^{-1}X' \cdot X(X'X)^{-1}X_f'
+\]
+注意到 $X'X$ 是 $k \times k$ 矩阵，$(X'X)^{-1}$ 也是 $k \times k$，而中间的 $X'X$ 恰好可以约去：
+\[
+X' \cdot X = X'X
+\]
+所以：
+\[
+X_f(X'X)^{-1} \cdot (X'X) \cdot (X'X)^{-1} \cdot X_f' = X_f(X'X)^{-1}X_f'
+\]
+最终得：
+\[
+\Var(w_f) = \sigma^2 X_f(X'X)^{-1}X_f'
+\]
+\textbf{注意}：$X_f$ 是 $1 \times k$ 行向量，$(X'X)^{-1}$ 是 $k \times k$，$X_f'$ 是 $k \times 1$ 列向量，因此 $X_f(X'X)^{-1}X_f'$ 是一个\textbf{标量}（$1 \times 1$），所以 $\Var(w_f)$ 也是一个标量。
+
+\textbf{2.4 $w_f$ 的分布}
+
+因为 $\hat{\beta}$ 是 $Y$ 的线性函数，而 $Y$ 服从正态分布（由 $U$ 服从正态分布保证），所以 $\hat{\beta}$ 也服从正态分布，$\hat{Y}_f = X_f\hat{\beta}$ 也服从正态分布，$w_f = \hat{Y}_f - \E(Y_f)$ 也服从正态分布。结合期望和方差的结果：
+\begin{equation}
+w_f \sim N[0,\, \sigma^2 X_f(X'X)^{-1}X_f'] \tag{3.59}
+\end{equation}
+
+\textbf{2.5 构造 $t$ 统计量}
+
+$\sigma^2$ 通常是未知的，需要用其无偏估计量 $\hat{\sigma}^2$ 代替。令
+\[
+\hat{\sigma}^2 = \frac{e'e}{n-k}
+\]
+其中 $e = Y - X\hat{\beta}$ 为残差向量，$n$ 为样本容量，$k$ 为参数个数。
+
+\textbf{为什么用 $\hat{\sigma}^2$ 代替 $\sigma^2$ 后，统计量从标准正态分布变为 $t$ 分布？详细说明如下：}
+
+将 $w_f$ 标准化：
+\[
+\frac{w_f}{\sigma\sqrt{X_f(X'X)^{-1}X_f'}} = \frac{\hat{Y}_f - \E(Y_f)}{\sigma\sqrt{X_f(X'X)^{-1}X_f'}} \sim N(0,1)
+\]
+
+同时，由统计理论可知：
+\[
+\frac{(n-k)\hat{\sigma}^2}{\sigma^2} = \frac{e'e}{\sigma^2} \sim \chi^2(n-k)
+\]
+
+而且，\textbf{$\hat{Y}_f$ 与 $\hat{\sigma}^2$ 相互独立}（因为 $\hat{Y}_f = X_f\hat{\beta}$ 依赖于 $\hat{\beta}$，而 $\hat{\beta}$ 与残差 $e$ 独立——这是OLS估计量的一条基本性质：估计量与残差不相关，且在正态假定下进一步独立）。
+
+因此，由 $t$ 分布的定义：
+\[
+t = \frac{N(0,1)}{\sqrt{\chi^2(n-k)/(n-k)}} \sim t(n-k)
+\]
+分子为上述标准正态变量，分母为 $\sqrt{\hat{\sigma}^2/\sigma^2}$，构造如下统计量：
+\begin{equation}
+t = \frac{\hat{Y}_f - \E(Y_f)}{\hat{\sigma}\sqrt{X_f(X'X)^{-1}X_f'}} \tag{3.60}
+\end{equation}
+该统计量 $t$ 服从自由度为 $n-k$ 的 $t$ 分布。
+
+\textbf{2.6 平均值 $\E(Y_f)$ 的预测区间}
+
+给定显著性水平 $\alpha$，查自由度为 $n-k$ 的 $t$ 分布表，可得临界值 $t_{\alpha/2}(n-k)$，使得：
+\[
+P\left(-t_{\alpha/2} \leq \frac{\hat{Y}_f - \E(Y_f)}{\hat{\sigma}\sqrt{X_f(X'X)^{-1}X_f'}} \leq t_{\alpha/2}\right) = 1-\alpha
+\]
+将分母乘到不等式两边：
+\begin{align}
+&P\Bigl(\hat{Y}_f - t_{\alpha/2}\hat{\sigma}\sqrt{X_f(X'X)^{-1}X_f'} \leq \E(Y_f) \leq \hat{Y}_f + t_{\alpha/2}\hat{\sigma}\sqrt{X_f(X'X)^{-1}X_f'}\Bigr) = 1-\alpha \notag
+\end{align}
+即 $\E(Y_f)$ 的置信度为 $1-\alpha$ 的预测区间为：
+\begin{equation}
+\hat{Y}_f - t_{\alpha/2}\hat{\sigma}\sqrt{X_f(X'X)^{-1}X_f'} \leq \E(Y_f) \leq \hat{Y}_f + t_{\alpha/2}\hat{\sigma}\sqrt{X_f(X'X)^{-1}X_f'} \tag{3.61}
+\end{equation}
+
+\subsection{三、个别值 \texorpdfstring{$Y_f$}{Yf} 的区间预测}
+
+要对预测期个别值 $Y_f$ 作区间预测，除已经得到的点预测值 $\hat{Y}_f$ 以外，还需要分析已知的点预测值 $\hat{Y}_f$ 和预测期个别值 $Y_f$ 的联系，并明确其概率分布性质。显然，与点预测值 $\hat{Y}_f$ 和预测期个别值 $Y_f$ 有关的是残差 $e_f$：
+\begin{equation}
+e_f = Y_f - \hat{Y}_f \tag{3.62}
+\end{equation}
+
+\textbf{3.1 $e_f$ 期望的推导}
+
+\noindent\textbf{第一步：展开 $Y_f$。}
+预测期的真实值为：
+\[
+Y_f = X_f\beta + u_f
+\]
+其中 $u_f$ 是预测期的随机扰动项，$u_f$ 与样本期的 $U$ 相互独立，且 $\E(u_f)=0$，$\Var(u_f)=\sigma^2$。
+
+\noindent\textbf{第二步：展开 $e_f$。}
+\[
+e_f = Y_f - \hat{Y}_f = (X_f\beta + u_f) - X_f\hat{\beta} = X_f\beta + u_f - X_f\hat{\beta}
+\]
+\[
+= X_f(\beta - \hat{\beta}) + u_f
+\]
+\[
+= -X_f(\hat{\beta} - \beta) + u_f
+\]
+
+\noindent\textbf{第三步：取期望。}
+\[
+\E(e_f) = \E[-X_f(\hat{\beta}-\beta) + u_f]
+\]
+\[
+= -X_f \E(\hat{\beta}-\beta) + \E(u_f)
+\]
+由1.3节已证 $\E(\hat{\beta}) = \beta$，即 $\E(\hat{\beta}-\beta) = 0$；又由假定 $\E(u_f) = 0$：
+\begin{equation}
+\E(e_f) = -X_f \cdot 0 + 0 = 0 \tag{3.63}
+\end{equation}
+
+\textbf{3.2 $e_f$ 方差的推导（教材以“可以证明”略过，此处完整补出）}
+
+\noindent\textbf{第一步：将 $e_f$ 用 $U$ 和 $u_f$ 表示。}
+由1.3节 (***): $\hat{\beta}-\beta = (X'X)^{-1}X'U$，代入 $e_f$ 的表达式：
+\[
+e_f = -X_f(X'X)^{-1}X'U + u_f
+\]
+
+\noindent\textbf{第二步：识别随机部分及其关系。}
+$e_f$ 包含两个随机项：
+\begin{itemize}
+\item $-X_f(X'X)^{-1}X'U$：依赖于样本期的扰动项向量 $U$
+\item $u_f$：预测期的扰动项
+\end{itemize}
+关键：\textbf{$u_f$ 与 $U$ 相互独立}。这是因为 $u_f$ 是预测期的扰动，$U$ 是样本期的扰动，不同时期的扰动项互不影响（这是经典假定的推论）。
+
+\noindent\textbf{第三步：计算方差。}
+由于两个随机项相互独立，方差的性质告诉我们：$\Var(A + B) = \Var(A) + \Var(B) + 2\Cov(A,B)$，当 $A$ 与 $B$ 独立时协方差为零，因此：
+\[
+\Var(e_f) = \Var[-X_f(X'X)^{-1}X'U] + \Var(u_f)
+\]
+
+\noindent\textbf{第四步：分别计算两项方差。}
+第一项：这与2.3节计算 $\Var(w_f)$ 完全相同（因为 $w_f = X_f(X'X)^{-1}X'U$），负号不影响方差：
+\[
+\Var[-X_f(X'X)^{-1}X'U] = \Var[X_f(X'X)^{-1}X'U] = \sigma^2 X_f(X'X)^{-1}X_f'
+\]
+
+第二项：
+\[
+\Var(u_f) = \sigma^2
+\]
+
+\noindent\textbf{第五步：合并。}
+\[
+\Var(e_f) = \sigma^2 X_f(X'X)^{-1}X_f' + \sigma^2 = \sigma^2[1 + X_f(X'X)^{-1}X_f']
+\]
+
+\textbf{3.3 $e_f$ 的分布}
+
+$e_f$ 由两部分组成：$-X_f(X'X)^{-1}X'U$ 是 $U$ 的线性函数，服从正态分布；$u_f$ 也服从正态分布。两个独立的正态随机变量之和仍服从正态分布。因此：
+\begin{equation}
+e_f \sim N\{0,\, \sigma^2[1 + X_f(X'X)^{-1}X_f']\} \tag{3.64}
+\end{equation}
+
+\textbf{重要对比}：比较 $e_f$ 的方差与 $w_f$ 的方差：
+
+\begin{center}
+\begin{tabular}{cc}
+\toprule
+ & \textbf{方差} \\
+\midrule
+$w_f = \hat{Y}_f - \E(Y_f)$ & $\sigma^2 X_f(X'X)^{-1}X_f'$ \\
+$e_f = Y_f - \hat{Y}_f$ & $\sigma^2[1 + X_f(X'X)^{-1}X_f']$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+$e_f$ 的方差比 $w_f$ 的方差\textbf{多了一项 $\sigma^2$}。这多出来的一项来自预测期扰动项 $u_f$ 自身的方差。直观理解：预测个别值 $Y_f$ 时，除了要承受估计 $\beta$ 带来的不确定性（与预测均值时相同），还要额外承受 $u_f$ 本身的随机波动，因此个别值的预测区间一定比平均值的预测区间\textbf{更宽}。
+
+\textbf{3.4 构造 $t$ 统计量}
+
+与2.5节完全类似的推理。用 $\hat{\sigma}^2$ 代替未知的 $\sigma^2$，构造如下统计量：
+\begin{equation}
+t = \frac{e_f - \E(e_f)}{\text{SE}(e_f)} = \frac{Y_f - \hat{Y}_f}{\hat{\sigma}\sqrt{1 + X_f(X'X)^{-1}X_f'}} \tag{3.65}
+\end{equation}
+该统计量服从自由度为 $n-k$ 的 $t$ 分布。其推理与2.5节完全相同：分子在 $\sigma$ 已知时服从标准正态，分母 $\hat{\sigma}^2/\sigma^2$ 服从 $\chi^2(n-k)/(n-k)$，且二者独立，因此比值服从 $t(n-k)$。
+
+\textbf{3.5 个别值 $Y_f$ 的预测区间}
+
+给定显著性水平 $\alpha$，查自由度为 $n-k$ 的 $t$ 分布表，可得临界值 $t_{\alpha/2}(n-k)$，使得：
+\[
+P\left(-t_{\alpha/2} \leq \frac{Y_f - \hat{Y}_f}{\hat{\sigma}\sqrt{1 + X_f(X'X)^{-1}X_f'}} \leq t_{\alpha/2}\right) = 1-\alpha
+\]
+将分母乘到不等式两边：
+\[
+P\Bigl(\hat{Y}_f - t_{\alpha/2}\hat{\sigma}\sqrt{1 + X_f(X'X)^{-1}X_f'} \leq Y_f \leq \hat{Y}_f + t_{\alpha/2}\hat{\sigma}\sqrt{1 + X_f(X'X)^{-1}X_f'}\Bigr) = 1-\alpha
+\]
+即 $Y_f$ 的置信度为 $1-\alpha$ 的预测区间为：
+\begin{equation}
+\hat{Y}_f - t_{\alpha/2}\hat{\sigma}\sqrt{1 + X_f(X'X)^{-1}X_f'} \leq Y_f \leq \hat{Y}_f + t_{\alpha/2}\hat{\sigma}\sqrt{1 + X_f(X'X)^{-1}X_f'} \tag{3.66}
+\end{equation}
+
+\vspace{1em}
+\textbf{总结对比}：
+
+\begin{center}
+\begin{tabular}{ccc}
+\toprule
+\textbf{预测对象} & \textbf{中心值} & \textbf{区间半径} \\
+\midrule
+平均值 $\E(Y_f)$ & $\hat{Y}_f$ & $t_{\alpha/2}\hat{\sigma}\sqrt{X_f(X'X)^{-1}X_f'}$ \\
+个别值 $Y_f$ & $\hat{Y}_f$ & $t_{\alpha/2}\hat{\sigma}\sqrt{1 + X_f(X'X)^{-1}X_f'}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+二者的中心值相同，但个别值的区间半径多了一个“1”，即多出 $t_{\alpha/2}\hat{\sigma}$ 这一项，反映了个别值预测中额外的扰动项不确定性。
+
+\end{document}
